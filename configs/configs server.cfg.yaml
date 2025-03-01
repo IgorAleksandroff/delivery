@@ -1,7 +1,0 @@
-# yaml-language-servers: ...
-package: api
-output: pkg/servers/servers.gen.go
-generate:
-  echo-server: true
-  embedded-spec: true
-  models: true
