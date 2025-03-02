@@ -8,13 +8,19 @@ import (
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
+const (
+	COORDINATE_MIN = 1
+	COORDINATE_MAX = 10
+)
+
 type Location struct {
 	x int
 	y int
 }
 
 func NewLocation(x, y int) (Location, error) {
-	if x < 1 || x > 10 || y < 1 || y > 10 {
+	if x < COORDINATE_MIN || x > COORDINATE_MAX ||
+		y < COORDINATE_MIN || y > COORDINATE_MAX {
 		return Location{}, errs.NewValueIsInvalidError("coordinates must be between 1 and 10 inclusive")
 	}
 	return Location{x: x, y: y}, nil
@@ -53,8 +59,8 @@ func (l Location) String() string {
 func CreateRandomLocation() Location {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	x := r.Intn(10) + 1
-	y := r.Intn(10) + 1
+	x := r.Intn(COORDINATE_MAX) + COORDINATE_MIN
+	y := r.Intn(COORDINATE_MAX) + COORDINATE_MIN
 
 	location, err := NewLocation(x, y)
 	if err != nil {
