@@ -46,7 +46,7 @@ func (l Location) Equals(other Location) bool {
 	return l.x == other.x && l.y == other.y
 }
 
-func (l Location) Distance(other Location) int {
+func (l Location) DistanceTo(other Location) int {
 	dx := abs(l.x - other.x)
 	dy := abs(l.y - other.y)
 	return dx + dy
