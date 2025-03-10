@@ -11,7 +11,7 @@ import (
 func TestTransportMoveTowards(t *testing.T) {
 	testCases := []struct {
 		name           string
-		transport      courier.Transport
+		transport      *courier.Transport
 		current        kernel.Location
 		target         kernel.Location
 		expectedResult kernel.Location

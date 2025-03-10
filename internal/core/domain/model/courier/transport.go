@@ -20,23 +20,23 @@ type Transport struct {
 	speed int
 }
 
-func NewTransport(name string, speed int) (Transport, error) {
+func NewTransport(name string, speed int) (*Transport, error) {
 	if name == "" {
-		return Transport{}, errs.NewValueIsRequiredError("transport name cannot be empty")
+		return nil, errs.NewValueIsRequiredError("transport name cannot be empty")
 	}
 
 	if speed < SPEED_MIN || speed > SPEED_MAX {
-		return Transport{}, errs.NewValueIsOutOfRangeError("speed", speed, SPEED_MIN, SPEED_MAX)
+		return nil, errs.NewValueIsOutOfRangeError("speed", speed, SPEED_MIN, SPEED_MAX)
 	}
 
-	return Transport{
+	return &Transport{
 		id:    uuid.New(),
 		name:  name,
 		speed: speed,
 	}, nil
 }
 
-func MustNewTransport(name string, speed int) Transport {
+func MustNewTransport(name string, speed int) *Transport {
 	t, err := NewTransport(name, speed)
 	if err != nil {
 		panic(err)
