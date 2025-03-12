@@ -91,12 +91,12 @@ func TestTransportMoveTowards(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Act
-			result, err := tc.transport.MoveTowards(tc.current, tc.target)
+			result, err := tc.transport.Move(tc.current, tc.target)
 			assert.NoError(t, err)
 
 			// Assert
 			if !result.Equals(tc.expectedResult) {
-				t.Errorf("MoveTowards from %v to %v = %v, want %v",
+				t.Errorf("Move from %v to %v = %v, want %v",
 					tc.current, tc.target, result, tc.expectedResult)
 			}
 		})

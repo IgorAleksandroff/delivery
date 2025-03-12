@@ -60,7 +60,7 @@ func (t Transport) Equals(other Transport) bool {
 	return t.id == other.id
 }
 
-func (t Transport) MoveTowards(current, target kernel.Location) (kernel.Location, error) {
+func (t Transport) Move(current, target kernel.Location) (kernel.Location, error) {
 	if current.Equals(target) {
 		return current, nil
 	}
