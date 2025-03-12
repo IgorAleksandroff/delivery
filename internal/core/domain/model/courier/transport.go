@@ -22,7 +22,7 @@ type Transport struct {
 
 func NewTransport(name string, speed int) (*Transport, error) {
 	if name == "" {
-		return nil, errs.NewValueIsRequiredError("transport name cannot be empty")
+		return nil, errs.NewValueIsRequiredError("Transport name cannot be empty")
 	}
 
 	if speed < SPEED_MIN || speed > SPEED_MAX {
@@ -61,6 +61,14 @@ func (t Transport) Equals(other Transport) bool {
 }
 
 func (t Transport) Move(current, target kernel.Location) (kernel.Location, error) {
+	if current.IsEmpty() {
+		return kernel.Location{}, errs.NewValueIsRequiredError("current")
+	}
+
+	if target.IsEmpty() {
+		return kernel.Location{}, errs.NewValueIsRequiredError("target")
+	}
+
 	if current.Equals(target) {
 		return current, nil
 	}
@@ -89,4 +97,8 @@ func (t Transport) Move(current, target kernel.Location) (kernel.Location, error
 
 func (t Transport) String() string {
 	return fmt.Sprintf("Transport{id=%s, name=%s, speed=%d}", t.id, t.name, t.speed)
+}
+
+func (t Transport) IsEmpty() bool {
+	return t == Transport{}
 }

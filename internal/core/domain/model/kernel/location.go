@@ -76,3 +76,7 @@ func abs(n int) int {
 	}
 	return n
 }
+
+func (l Location) IsEmpty() bool {
+	return l == Location{}
+}

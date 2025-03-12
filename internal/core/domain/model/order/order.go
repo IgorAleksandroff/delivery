@@ -27,23 +27,33 @@ var (
 	ErrOrderAlreadyAssigned = errors.New("order is already assigned to courier")
 	ErrOrderNotAssigned     = errors.New("order is not assigned to courier")
 	ErrOrderCompleted       = errors.New("order is already completed")
+	ErrInvalidLocation      = errors.New("invalid Location")
+	ErrInvalidOrderId       = errors.New("invalid order id")
 )
 
-func NewOrder(id uuid.UUID, location kernel.Location) *Order {
+func NewOrder(id uuid.UUID, location kernel.Location) (*Order, error) {
+	if id == uuid.Nil {
+		return nil, ErrInvalidOrderId
+	}
+
+	if location.IsEmpty() {
+		return nil, ErrInvalidLocation
+	}
+
 	return &Order{
 		ID:        id,
 		Location:  location,
 		Status:    StatusCreated,
 		CourierID: nil,
-	}
+	}, nil
 }
 
 func (o *Order) AssignToCourier(courierId uuid.UUID) error {
-	if o.Status == StatusCompleted {
+	if o.IsCompleted() {
 		return ErrOrderCompleted
 	}
 
-	if o.Status == StatusAssigned && o.CourierID != nil && *o.CourierID != courierId {
+	if o.IsAssigned() && *o.CourierID != courierId {
 		return ErrOrderAlreadyAssigned
 	}
 
@@ -54,7 +64,7 @@ func (o *Order) AssignToCourier(courierId uuid.UUID) error {
 }
 
 func (o *Order) Complete() error {
-	if o.Status != StatusAssigned || o.CourierID == nil {
+	if !o.IsAssigned() {
 		return ErrOrderNotAssigned
 	}
 
