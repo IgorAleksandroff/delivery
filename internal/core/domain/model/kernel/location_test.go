@@ -165,7 +165,7 @@ func TestLocationDistance(t *testing.T) {
 			expected: 7, // |4-1| + |5-1| = 3 + 4 = 7
 		},
 		{
-			name:     "Distance between extreme corners",
+			name:     "DistanceTo between extreme corners",
 			loc1:     kernel.MustNewLocation(1, 1),
 			loc2:     kernel.MustNewLocation(10, 10),
 			expected: 18, // |10-1| + |10-1| = 9 + 9 = 18
@@ -174,16 +174,16 @@ func TestLocationDistance(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			distance := tc.loc1.Distance(tc.loc2)
+			distance := tc.loc1.DistanceTo(tc.loc2)
 
 			if distance != tc.expected {
-				t.Errorf("%v.Distance(%v) = %v, want %v", tc.loc1, tc.loc2, distance, tc.expected)
+				t.Errorf("%v.DistanceTo(%v) = %v, want %v", tc.loc1, tc.loc2, distance, tc.expected)
 			}
 
 			// Test symmetry property of distance
-			reverseDistance := tc.loc2.Distance(tc.loc1)
+			reverseDistance := tc.loc2.DistanceTo(tc.loc1)
 			if reverseDistance != distance {
-				t.Errorf("Distance is not symmetric: %v.Distance(%v) = %v, but %v.Distance(%v) = %v",
+				t.Errorf("DistanceTo is not symmetric: %v.DistanceTo(%v) = %v, but %v.DistanceTo(%v) = %v",
 					tc.loc1, tc.loc2, distance, tc.loc2, tc.loc1, reverseDistance)
 			}
 		})
