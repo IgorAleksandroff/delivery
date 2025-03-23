@@ -5,15 +5,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	
+
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
 )
 
 func TestCourier_StepsToOrder(t *testing.T) {
 	type fields struct {
-		name      string
-		transport *Transport
-		location  kernel.Location
+		name           string
+		transportName  string
+		transportSpeed int
+		location       kernel.Location
 	}
 
 	type args struct {
@@ -29,9 +30,10 @@ func TestCourier_StepsToOrder(t *testing.T) {
 		{
 			name: "Same location - zero steps",
 			fields: fields{
-				name:      "Тестовый курьер",
-				transport: MustNewTransport("Велосипед", 2),
-				location:  kernel.MustNewLocation(5, 5),
+				name:           "Тестовый курьер",
+				transportName:  "Велосипед",
+				transportSpeed: 2,
+				location:       kernel.MustNewLocation(5, 5),
 			},
 			args: args{
 				orderLocation: kernel.MustNewLocation(5, 5),
@@ -41,9 +43,10 @@ func TestCourier_StepsToOrder(t *testing.T) {
 		{
 			name: "Horizontal movement - bike speed 2",
 			fields: fields{
-				name:      "Тестовый курьер",
-				transport: MustNewTransport("Велосипед", 2),
-				location:  kernel.MustNewLocation(1, 1),
+				name:           "Тестовый курьер",
+				transportName:  "Велосипед",
+				transportSpeed: 2,
+				location:       kernel.MustNewLocation(1, 1),
 			},
 			args: args{
 				orderLocation: kernel.MustNewLocation(1, 9),
@@ -53,9 +56,10 @@ func TestCourier_StepsToOrder(t *testing.T) {
 		{
 			name: "Vertical movement - car speed 3",
 			fields: fields{
-				name:      "Тестовый курьер",
-				transport: MustNewTransport("Авто", 3),
-				location:  kernel.MustNewLocation(1, 1),
+				name:           "Тестовый курьер",
+				transportName:  "Авто",
+				transportSpeed: 3,
+				location:       kernel.MustNewLocation(1, 1),
 			},
 			args: args{
 				orderLocation: kernel.MustNewLocation(10, 1),
@@ -65,9 +69,10 @@ func TestCourier_StepsToOrder(t *testing.T) {
 		{
 			name: "Diagonal movement - foot speed 1",
 			fields: fields{
-				name:      "Тестовый курьер",
-				transport: MustNewTransport("Пешком", 1),
-				location:  kernel.MustNewLocation(1, 1),
+				name:           "Тестовый курьер",
+				transportName:  "ВелосПешкомипед",
+				transportSpeed: 1,
+				location:       kernel.MustNewLocation(1, 1),
 			},
 			args: args{
 				orderLocation: kernel.MustNewLocation(4, 4),
@@ -78,7 +83,7 @@ func TestCourier_StepsToOrder(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := MustNewCourier(tt.fields.name, tt.fields.transport, tt.fields.location)
+			c := MustNewCourier(tt.fields.name, tt.fields.transportName, tt.fields.transportSpeed, tt.fields.location)
 
 			gotSteps, err := c.StepsToOrder(tt.args.orderLocation)
 			require.NoError(t, err)

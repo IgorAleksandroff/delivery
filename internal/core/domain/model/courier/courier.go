@@ -29,17 +29,17 @@ var (
 	ErrCourierAlreadyBusy = errors.New("courier is already busy")
 	ErrCourierAlreadyFree = errors.New("courier is already free")
 	ErrInvalidCourierName = errors.New("invalid courier name")
-	ErrInvalidTransport   = errors.New("invalid Transport")
 	ErrInvalidLocation    = errors.New("invalid Location")
 )
 
-func NewCourier(name string, transport *Transport, location kernel.Location) (*Courier, error) {
+func NewCourier(name string, transportName string, transportSpeed int, location kernel.Location) (*Courier, error) {
 	if strings.TrimSpace(name) == "" {
 		return nil, ErrInvalidCourierName
 	}
 
-	if transport == nil || (*transport).IsEmpty() {
-		return nil, ErrInvalidTransport
+	transport, err := NewTransport(transportName, transportSpeed)
+	if err != nil {
+		return nil, err
 	}
 
 	if location.IsEmpty() {
@@ -55,8 +55,8 @@ func NewCourier(name string, transport *Transport, location kernel.Location) (*C
 	}, nil
 }
 
-func MustNewCourier(name string, transport *Transport, location kernel.Location) *Courier {
-	t, err := NewCourier(name, transport, location)
+func MustNewCourier(name string, transportName string, transportSpeed int, location kernel.Location) *Courier {
+	t, err := NewCourier(name, transportName, transportSpeed, location)
 	if err != nil {
 		panic(err)
 	}
