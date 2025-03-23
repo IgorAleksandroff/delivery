@@ -1,8 +1,9 @@
 package courier_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/courier"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
@@ -80,7 +81,7 @@ func TestTransportMoveTowards(t *testing.T) {
 			expectedResult: kernel.MustNewLocation(5, 4),
 		},
 		{
-			name:           "Faster transport - speed 3",
+			name:           "Faster Transport - speed 3",
 			transport:      courier.MustNewTransport("Car", 3),
 			current:        kernel.MustNewLocation(9, 9),
 			target:         kernel.MustNewLocation(10, 10),
@@ -91,12 +92,12 @@ func TestTransportMoveTowards(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Act
-			result, err := tc.transport.MoveTowards(tc.current, tc.target)
+			result, err := tc.transport.Move(tc.current, tc.target)
 			assert.NoError(t, err)
 
 			// Assert
 			if !result.Equals(tc.expectedResult) {
-				t.Errorf("MoveTowards from %v to %v = %v, want %v",
+				t.Errorf("Move from %v to %v = %v, want %v",
 					tc.current, tc.target, result, tc.expectedResult)
 			}
 		})
