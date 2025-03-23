@@ -1,4 +1,4 @@
-package orderrepo
+package courierrepo
 
 import (
 	"github.com/google/uuid"
