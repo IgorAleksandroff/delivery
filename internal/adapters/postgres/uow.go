@@ -2,32 +2,32 @@ package postgres
 
 import (
 	"context"
-	
+
 	"gorm.io/gorm"
 
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
 )
 
-var _ uow.UnitOfWork = &UnitOfWork{}
+var _ uow.UnitOfWork = &GormUnitOfWork{}
 
-type UnitOfWork struct {
+type GormUnitOfWork struct {
 	db *gorm.DB
 }
 
-func NewUnitOfWork(db *gorm.DB) (*UnitOfWork, error) {
+func NewGormUnitOfWork(db *gorm.DB) (*GormUnitOfWork, error) {
 	if db == nil {
 		return nil, errs.NewValueIsRequiredError("db")
 	}
-	return &UnitOfWork{db: db}, nil
+	return &GormUnitOfWork{db: db}, nil
 }
 
-func (u *UnitOfWork) Begin(ctx context.Context) context.Context {
+func (u *GormUnitOfWork) Begin(ctx context.Context) context.Context {
 	tx := u.db.Begin()
 	return NewContextWithTx(ctx, tx)
 }
 
-func (u *UnitOfWork) Commit(ctx context.Context) error {
+func (u *GormUnitOfWork) Commit(ctx context.Context) error {
 	tx := GetTxFromContext(ctx, nil)
 	if tx != nil {
 		return tx.Commit().Error
@@ -35,7 +35,7 @@ func (u *UnitOfWork) Commit(ctx context.Context) error {
 	return nil
 }
 
-func (u *UnitOfWork) Rollback(ctx context.Context) error {
+func (u *GormUnitOfWork) Rollback(ctx context.Context) error {
 	tx := GetTxFromContext(ctx, nil)
 	if tx != nil {
 		return tx.Rollback().Error
