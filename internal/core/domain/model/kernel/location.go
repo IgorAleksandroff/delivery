@@ -80,3 +80,11 @@ func abs(n int) int {
 func (l Location) IsEmpty() bool {
 	return l == Location{}
 }
+
+func MaxLocation() (Location, error) {
+	return NewLocation(COORDINATE_MAX, COORDINATE_MAX)
+}
+
+func MinLocation() (Location, error) {
+	return NewLocation(COORDINATE_MIN, COORDINATE_MIN)
+}

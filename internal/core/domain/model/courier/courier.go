@@ -105,14 +105,30 @@ func (c *Courier) Move(target kernel.Location) error {
 	return nil
 }
 
-func (c *Courier) ID() uuid.UUID {
-	return c.id
-}
-
 func (c *Courier) IsFree() bool {
 	return c.status == StatusFree
 }
 
 func (c *Courier) IsBusy() bool {
 	return c.status == StatusBusy
+}
+
+func (c *Courier) ID() uuid.UUID {
+	return c.id
+}
+
+func (c *Courier) Name() string {
+	return c.name
+}
+
+func (c *Courier) Status() Status {
+	return c.status
+}
+
+func (c *Courier) Transport() *Transport {
+	return c.transport
+}
+
+func (c *Courier) Location() kernel.Location {
+	return c.location
 }
