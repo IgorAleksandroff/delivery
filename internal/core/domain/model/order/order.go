@@ -17,10 +17,10 @@ const (
 )
 
 type Order struct {
-	ID        uuid.UUID
-	Location  kernel.Location
-	Status    Status
-	CourierID *uuid.UUID
+	id        uuid.UUID
+	location  kernel.Location
+	status    Status
+	courierID *uuid.UUID
 }
 
 var (
@@ -41,11 +41,19 @@ func NewOrder(id uuid.UUID, location kernel.Location) (*Order, error) {
 	}
 
 	return &Order{
-		ID:        id,
-		Location:  location,
-		Status:    StatusCreated,
-		CourierID: nil,
+		id:        id,
+		location:  location,
+		status:    StatusCreated,
+		courierID: nil,
 	}, nil
+}
+
+func MustNewOrder(id uuid.UUID, location kernel.Location) *Order {
+	t, err := NewOrder(id, location)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
 func (o *Order) AssignToCourier(courierId uuid.UUID) error {
@@ -53,12 +61,12 @@ func (o *Order) AssignToCourier(courierId uuid.UUID) error {
 		return ErrOrderCompleted
 	}
 
-	if o.IsAssigned() && *o.CourierID != courierId {
+	if o.IsAssigned() && *o.courierID != courierId {
 		return ErrOrderAlreadyAssigned
 	}
 
-	o.Status = StatusAssigned
-	o.CourierID = &courierId
+	o.status = StatusAssigned
+	o.courierID = &courierId
 
 	return nil
 }
@@ -68,15 +76,23 @@ func (o *Order) Complete() error {
 		return ErrOrderNotAssigned
 	}
 
-	o.Status = StatusCompleted
+	o.status = StatusCompleted
 
 	return nil
 }
 
+func (o *Order) Location() kernel.Location {
+	return o.location
+}
+
+func (o *Order) AssignedCourier() *uuid.UUID {
+	return o.courierID
+}
+
 func (o *Order) IsAssigned() bool {
-	return o.Status == StatusAssigned && o.CourierID != nil
+	return o.status == StatusAssigned && o.courierID != nil
 }
 
 func (o *Order) IsCompleted() bool {
-	return o.Status == StatusCompleted
+	return o.status == StatusCompleted
 }
