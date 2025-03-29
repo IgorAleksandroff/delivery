@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"context"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres"
+	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
+	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
 	"log"
 
 	"gorm.io/gorm"
-	
+
 	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres/courierrepo"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
@@ -14,8 +17,10 @@ import (
 )
 
 type CompositionRoot struct {
-	DomainServices DomainServices
-	Repositories   Repositories
+	DomainServices  DomainServices
+	Repositories    Repositories
+	CommandHandlers CommandHandlers
+	QueryHandlers   QueryHandlers
 }
 
 type DomainServices struct {
@@ -28,23 +33,26 @@ type Repositories struct {
 	CourierRepository ports.CourierRepository
 }
 
+type CommandHandlers struct {
+	AssignOrdersCommandHandler *usecases.AssignOrdersCommandHandler
+	CreateOrderCommandHandler  *usecases.CreateOrderCommandHandler
+	MoveCouriersCommandHandler *usecases.MoveCouriersCommandHandler
+}
+
+type QueryHandlers struct {
+	GetAllCouriersQueryHandler        *queries.GetAllCouriersQueryHandler
+	GetNotCompletedOrdersQueryHandler *queries.GetNotCompletedOrdersQueryHandler
+}
+
 func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 	// Domain Services
 	orderDispatcher := services.NewOrderDispatcher()
 
 	// Repositories
-	//unitOfWork, err := postgres.NewUnitOfWork(gormDb)
-	//if err != nil {
-	//	log.Fatalf("run application error: %s", err)
-	//}
-	//
-	//ctx = unitOfWork.Begin(ctx)
-	//defer func() {
-	//	err := unitOfWork.Rollback(ctx)
-	//	if err != nil {
-	//		log.Println("Rollback error:", err)
-	//	}
-	//}()
+	unitOfWork, err := postgres.NewGormUnitOfWork(gormDb)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
 
 	orderRepository, err := orderrepo.NewRepository(gormDb)
 	if err != nil {
@@ -52,6 +60,35 @@ func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 	}
 
 	courierRepository, err := courierrepo.NewRepository(gormDb)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	// Command Handlers
+	createOrderCommandHandler, err := usecases.NewCreateOrderCommandHandler(orderRepository)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	assignOrdersCommandHandler, err := usecases.NewAssignOrdersCommandHandler(
+		unitOfWork, orderRepository, courierRepository, orderDispatcher)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	moveCouriersCommandHandler, err := usecases.NewMoveCouriersCommandHandler(
+		unitOfWork, orderRepository, courierRepository)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	// Query Handlers
+	getAllCouriersQueryHandler, err := queries.NewGetAllCouriersQueryHandler(gormDb)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	getNotCompletedOrdersQueryHandler, err := queries.NewGetNotCompletedOrdersQueryHandler(gormDb)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
@@ -64,6 +101,15 @@ func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 		Repositories: Repositories{
 			OrderRepository:   orderRepository,
 			CourierRepository: courierRepository,
+		},
+		CommandHandlers: CommandHandlers{
+			AssignOrdersCommandHandler: assignOrdersCommandHandler,
+			CreateOrderCommandHandler:  createOrderCommandHandler,
+			MoveCouriersCommandHandler: moveCouriersCommandHandler,
+		},
+		QueryHandlers: QueryHandlers{
+			getAllCouriersQueryHandler,
+			getNotCompletedOrdersQueryHandler,
 		},
 	}
 
