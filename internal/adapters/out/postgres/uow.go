@@ -9,50 +9,46 @@ import (
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
 )
 
-var _ uow.UnitOfWork = &GormUnitOfWork{}
+var _ uow.UnitOfWork = &UnitOfWork{}
 
-type GormUnitOfWork struct {
+type txKey struct{}
+
+type UnitOfWork struct {
 	db *gorm.DB
 }
 
-func NewGormUnitOfWork(db *gorm.DB) (*GormUnitOfWork, error) {
+func NewUnitOfWork(db *gorm.DB) (*UnitOfWork, error) {
 	if db == nil {
 		return nil, errs.NewValueIsRequiredError("db")
 	}
-	return &GormUnitOfWork{db: db}, nil
+	return &UnitOfWork{db: db}, nil
 }
 
-func (u *GormUnitOfWork) Begin(ctx context.Context) context.Context {
+func (u *UnitOfWork) Begin(ctx context.Context) context.Context {
 	tx := u.db.Begin()
-	return NewContextWithTx(ctx, tx)
+	return context.WithValue(ctx, txKey{}, tx)
 }
 
-func (u *GormUnitOfWork) Commit(ctx context.Context) error {
-	tx := GetTxFromContext(ctx, nil)
+func (u *UnitOfWork) Commit(ctx context.Context) error {
+	tx := GetTxFromContext(ctx)
 	if tx != nil {
 		return tx.Commit().Error
 	}
 	return nil
 }
 
-func (u *GormUnitOfWork) Rollback(ctx context.Context) error {
-	tx := GetTxFromContext(ctx, nil)
+func (u *UnitOfWork) Rollback(ctx context.Context) error {
+	tx := GetTxFromContext(ctx)
 	if tx != nil {
 		return tx.Rollback().Error
 	}
 	return nil
 }
 
-type txKey struct{}
-
-func NewContextWithTx(ctx context.Context, tx *gorm.DB) context.Context {
-	return context.WithValue(ctx, txKey{}, tx)
-}
-
-func GetTxFromContext(ctx context.Context, db *gorm.DB) *gorm.DB {
+func GetTxFromContext(ctx context.Context) *gorm.DB {
 	tx, ok := ctx.Value(txKey{}).(*gorm.DB)
 	if ok {
-		return tx // 🔥 Используем транзакцию, если она есть
+		return tx
 	}
-	return db // Если нет транзакции, работаем с `db`
+	return nil
 }

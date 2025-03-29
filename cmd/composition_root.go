@@ -57,7 +57,7 @@ func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 	orderDispatcher := services.NewOrderDispatcher()
 
 	// Repositories
-	unitOfWork, err := postgres.NewGormUnitOfWork(gormDb)
+	unitOfWork, err := postgres.NewUnitOfWork(gormDb)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}

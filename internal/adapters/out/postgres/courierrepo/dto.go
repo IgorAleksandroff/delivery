@@ -27,7 +27,13 @@ type LocationDTO struct {
 	Y int
 }
 
+// TableName - вернуть имя таблицы для курьеров
 func (CourierDTO) TableName() string {
+	return "couriers"
+}
+
+// TableName - вернуть имя таблицы для транспорта
+func (TransportDTO) TableName() string {
 	return "transports"
 }
 

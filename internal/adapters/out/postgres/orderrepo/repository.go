@@ -33,7 +33,10 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
 	dto := DomainToDTO(aggregate)
 
-	tx := postgres.GetTxFromContext(ctx, r.db)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db
+	}
 	err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Create(&dto).Error
 	if err != nil {
 		return err
@@ -44,7 +47,10 @@ func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
 func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 	dto := DomainToDTO(aggregate)
 
-	tx := postgres.GetTxFromContext(ctx, r.db)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db
+	}
 	err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(&dto).Error
 	if err != nil {
 		return err
@@ -55,12 +61,15 @@ func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error) {
 	dto := OrderDTO{}
 
-	tx := postgres.GetTxFromContext(ctx, r.db)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db
+	}
 	result := tx.
 		Preload(clause.Associations).
 		Find(&dto, ID)
 	if result.RowsAffected == 0 {
-		return nil, errs.NewObjectNotFoundError(ID.String(), ID)
+		return nil, nil
 	}
 
 	aggregate := DtoToDomain(dto)
@@ -70,7 +79,10 @@ func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error
 func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order, error) {
 	dto := OrderDTO{}
 
-	tx := postgres.GetTxFromContext(ctx, r.db)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db
+	}
 	result := tx.
 		Preload(clause.Associations).
 		Where("status = ?", order.StatusCreated).
@@ -89,7 +101,10 @@ func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order,
 func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order, error) {
 	var dtos []OrderDTO
 
-	tx := postgres.GetTxFromContext(ctx, r.db)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db
+	}
 	result := tx.
 		Preload(clause.Associations).
 		Where("status = ?", order.StatusAssigned).

@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	_ "github.com/lib/pq"
 	"github.com/robfig/cron/v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -37,6 +38,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	crateDbIfNotExists(connectionString, dbDbName)
 	gormDb := mustGormOpen(connectionString)
 	mustAutoMigrate(gormDb)
 
@@ -181,12 +183,7 @@ func mustGormOpen(connectionString string) *gorm.DB {
 }
 
 func mustAutoMigrate(db *gorm.DB) {
-	err := db.AutoMigrate(&courierrepo.CourierDTO{})
-	if err != nil {
-		log.Fatalf("Ошибка миграции: %v", err)
-	}
-
-	err = db.AutoMigrate(&courierrepo.TransportDTO{})
+	err := db.AutoMigrate(&courierrepo.TransportDTO{})
 	if err != nil {
 		log.Fatalf("Ошибка миграции: %v", err)
 	}
@@ -194,5 +191,24 @@ func mustAutoMigrate(db *gorm.DB) {
 	err = db.AutoMigrate(&orderrepo.OrderDTO{})
 	if err != nil {
 		log.Fatalf("Ошибка миграции: %v", err)
+	}
+
+	err = db.AutoMigrate(&courierrepo.CourierDTO{})
+	if err != nil {
+		log.Fatalf("Ошибка миграции: %v", err)
+	}
+}
+
+func crateDbIfNotExists(connectionString, dbName string) {
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		log.Fatalf("Ошибка подключения к PostgreSQL: %v", err)
+	}
+	defer db.Close()
+
+	// Создаём базу данных, если её нет
+	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName))
+	if err != nil {
+		log.Printf("Ошибка создания БД (возможно, уже существует): %v", err)
 	}
 }
