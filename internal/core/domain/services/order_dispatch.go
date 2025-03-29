@@ -6,8 +6,7 @@ import (
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
-type Dispatcher struct {
-}
+type Dispatcher struct{}
 
 func NewOrderDispatcher() *Dispatcher {
 	return &Dispatcher{}

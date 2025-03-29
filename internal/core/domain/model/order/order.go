@@ -85,6 +85,14 @@ func (o *Order) Location() kernel.Location {
 	return o.location
 }
 
+func (o *Order) ID() uuid.UUID {
+	return o.id
+}
+
+func (o *Order) Status() Status {
+	return o.status
+}
+
 func (o *Order) AssignedCourier() *uuid.UUID {
 	return o.courierID
 }

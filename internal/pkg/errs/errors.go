@@ -6,19 +6,31 @@ import (
 	"strings"
 )
 
-type ObjectNotFoundError struct {
-	msg string
-}
-
-func NewObjectNotFoundError(msg string) ObjectNotFoundError {
-	return ObjectNotFoundError{msg: msg}
-}
-
-func (e ObjectNotFoundError) Error() string {
-	return fmt.Sprintf("object not found %s", e.msg)
-}
-
+var ErrObjectNotFound = errors.New("object not found")
 var ErrValueIsInvalid = errors.New("value is invalid")
+var ErrValueIsRequired = errors.New("value is required")
+var ErrVersionIsInvalid = errors.New("version is invalid")
+var ErrValueIsOutOfRange = errors.New("value is out of range")
+
+type ObjectNotFoundError struct {
+	ParamName string
+	ID        any
+}
+
+func NewObjectNotFoundError(paramName string, ID any) *ObjectNotFoundError {
+	return &ObjectNotFoundError{
+		ParamName: paramName,
+		ID:        ID,
+	}
+}
+
+func (e *ObjectNotFoundError) Error() string {
+	return fmt.Sprintf("%s: %s", ErrObjectNotFound, e.ID)
+}
+
+func (e *ObjectNotFoundError) Unwrap() error {
+	return ErrObjectNotFound
+}
 
 type ValueIsInvalidError struct {
 	ParamName string
@@ -38,8 +50,6 @@ func (e *ValueIsInvalidError) Unwrap() error {
 	return ErrValueIsInvalid
 }
 
-var ErrValueIsRequired = errors.New("value is required")
-
 type ValueIsRequiredError struct {
 	ParamName string
 }
@@ -57,8 +67,6 @@ func (e *ValueIsRequiredError) Error() string {
 func (e *ValueIsRequiredError) Unwrap() error {
 	return ErrValueIsRequired
 }
-
-var ErrVersionIsInvalid = errors.New("version is invalid")
 
 type VersionIsInvalidError struct {
 	ParamName string
@@ -88,8 +96,6 @@ func (e *VersionIsInvalidError) Error() string {
 func (e *VersionIsInvalidError) Unwrap() error {
 	return ErrVersionIsInvalid
 }
-
-var ErrValueIsOutOfRange = errors.New("value is out of range")
 
 type ValueIsOutOfRangeError struct {
 	ParamName string
