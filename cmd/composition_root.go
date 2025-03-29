@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"context"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/in/jobs"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
+	"github.com/robfig/cron/v3"
 	"log"
 
 	"gorm.io/gorm"
@@ -21,6 +23,7 @@ type CompositionRoot struct {
 	Repositories    Repositories
 	CommandHandlers CommandHandlers
 	QueryHandlers   QueryHandlers
+	Jobs            Jobs
 }
 
 type DomainServices struct {
@@ -42,6 +45,11 @@ type CommandHandlers struct {
 type QueryHandlers struct {
 	GetAllCouriersQueryHandler        *queries.GetAllCouriersQueryHandler
 	GetNotCompletedOrdersQueryHandler *queries.GetNotCompletedOrdersQueryHandler
+}
+
+type Jobs struct {
+	AssignOrdersJob cron.Job
+	MoveCouriersJob cron.Job
 }
 
 func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
@@ -93,6 +101,17 @@ func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 		log.Fatalf("run application error: %s", err)
 	}
 
+	// Jobs
+	assignOrdersJob, err := jobs.NewAssignOrdersJob(assignOrdersCommandHandler)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	moveCouriersJob, err := jobs.NewMoveCouriersJob(moveCouriersCommandHandler)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
 	compositionRoot := CompositionRoot{
 		DomainServices: DomainServices{
 			OrderDispatcher: orderDispatcher,
@@ -108,8 +127,12 @@ func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 			MoveCouriersCommandHandler: moveCouriersCommandHandler,
 		},
 		QueryHandlers: QueryHandlers{
-			getAllCouriersQueryHandler,
-			getNotCompletedOrdersQueryHandler,
+			GetAllCouriersQueryHandler:        getAllCouriersQueryHandler,
+			GetNotCompletedOrdersQueryHandler: getNotCompletedOrdersQueryHandler,
+		},
+		Jobs: Jobs{
+			AssignOrdersJob: assignOrdersJob,
+			MoveCouriersJob: moveCouriersJob,
 		},
 	}
 

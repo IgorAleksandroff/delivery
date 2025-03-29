@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/robfig/cron/v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -35,7 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	
+
 	gormDb := mustGormOpen(connectionString)
 	mustAutoMigrate(gormDb)
 
@@ -44,7 +45,21 @@ func main() {
 		gormDb,
 	)
 
+	startCron(compositionRoot)
 	startWebServer(compositionRoot, httpPort)
+}
+
+func startCron(compositionRoot cmd.CompositionRoot) {
+	c := cron.New()
+	_, err := c.AddFunc("@every 1s", compositionRoot.Jobs.AssignOrdersJob.Run)
+	if err != nil {
+		log.Fatalf("ошибка при добавлении задачи: %v", err)
+	}
+	_, err = c.AddFunc("@every 2s", compositionRoot.Jobs.MoveCouriersJob.Run)
+	if err != nil {
+		log.Fatalf("ошибка при добавлении задачи: %v", err)
+	}
+	c.Start()
 }
 
 func startWebServer(compositionRoot cmd.CompositionRoot, port string) {
