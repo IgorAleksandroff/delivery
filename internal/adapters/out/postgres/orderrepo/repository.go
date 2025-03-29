@@ -1,19 +1,20 @@
-package courierrepo
+package orderrepo
 
 import (
 	"context"
+	"errors"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/courier"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
-var _ ports.CourierRepository = &Repository{}
+var _ ports.OrderRepository = &Repository{}
 
 type Repository struct {
 	db *gorm.DB
@@ -29,7 +30,7 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 	}, nil
 }
 
-func (r *Repository) Add(ctx context.Context, aggregate *courier.Courier) error {
+func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
 	dto := DomainToDTO(aggregate)
 
 	tx := postgres.GetTxFromContext(ctx, r.db)
@@ -40,7 +41,7 @@ func (r *Repository) Add(ctx context.Context, aggregate *courier.Courier) error 
 	return nil
 }
 
-func (r *Repository) Update(ctx context.Context, aggregate *courier.Courier) error {
+func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 	dto := DomainToDTO(aggregate)
 
 	tx := postgres.GetTxFromContext(ctx, r.db)
@@ -51,8 +52,8 @@ func (r *Repository) Update(ctx context.Context, aggregate *courier.Courier) err
 	return nil
 }
 
-func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*courier.Courier, error) {
-	dto := CourierDTO{}
+func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error) {
+	dto := OrderDTO{}
 
 	tx := postgres.GetTxFromContext(ctx, r.db)
 	result := tx.
@@ -66,22 +67,41 @@ func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*courier.Courier, e
 	return aggregate, nil
 }
 
-func (r *Repository) GetAllInFreeStatus(ctx context.Context) ([]*courier.Courier, error) {
-	var dtos []CourierDTO
+func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order, error) {
+	dto := OrderDTO{}
 
 	tx := postgres.GetTxFromContext(ctx, r.db)
 	result := tx.
 		Preload(clause.Associations).
-		Where("status = ?", courier.StatusFree).
+		Where("status = ?", order.StatusCreated).
+		First(&dto)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, errs.NewObjectNotFoundError("Free courier", nil)
+		}
+		return nil, result.Error
+	}
+
+	aggregate := DtoToDomain(dto)
+	return aggregate, nil
+}
+
+func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order, error) {
+	var dtos []OrderDTO
+
+	tx := postgres.GetTxFromContext(ctx, r.db)
+	result := tx.
+		Preload(clause.Associations).
+		Where("status = ?", order.StatusAssigned).
 		Find(&dtos)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil, errs.NewObjectNotFoundError("Free couriers", nil)
+		return nil, errs.NewObjectNotFoundError("Assigned orders", nil)
 	}
 
-	aggregates := make([]*courier.Courier, len(dtos))
+	aggregates := make([]*order.Order, len(dtos))
 	for i, dto := range dtos {
 		aggregates[i] = DtoToDomain(dto)
 	}

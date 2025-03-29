@@ -2,15 +2,15 @@ package cmd
 
 import (
 	"context"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
 	"log"
 
 	"gorm.io/gorm"
 
-	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres/courierrepo"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
