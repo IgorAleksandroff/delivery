@@ -2,15 +2,17 @@ package cmd
 
 import (
 	"context"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/in/jobs"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
+	"github.com/robfig/cron/v3"
 	"log"
 
 	"gorm.io/gorm"
 
-	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres/courierrepo"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
@@ -21,6 +23,7 @@ type CompositionRoot struct {
 	Repositories    Repositories
 	CommandHandlers CommandHandlers
 	QueryHandlers   QueryHandlers
+	Jobs            Jobs
 }
 
 type DomainServices struct {
@@ -44,12 +47,17 @@ type QueryHandlers struct {
 	GetNotCompletedOrdersQueryHandler *queries.GetNotCompletedOrdersQueryHandler
 }
 
+type Jobs struct {
+	AssignOrdersJob cron.Job
+	MoveCouriersJob cron.Job
+}
+
 func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 	// Domain Services
 	orderDispatcher := services.NewOrderDispatcher()
 
 	// Repositories
-	unitOfWork, err := postgres.NewGormUnitOfWork(gormDb)
+	unitOfWork, err := postgres.NewUnitOfWork(gormDb)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
@@ -93,6 +101,17 @@ func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 		log.Fatalf("run application error: %s", err)
 	}
 
+	// Jobs
+	assignOrdersJob, err := jobs.NewAssignOrdersJob(assignOrdersCommandHandler)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	moveCouriersJob, err := jobs.NewMoveCouriersJob(moveCouriersCommandHandler)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
 	compositionRoot := CompositionRoot{
 		DomainServices: DomainServices{
 			OrderDispatcher: orderDispatcher,
@@ -108,8 +127,12 @@ func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 			MoveCouriersCommandHandler: moveCouriersCommandHandler,
 		},
 		QueryHandlers: QueryHandlers{
-			getAllCouriersQueryHandler,
-			getNotCompletedOrdersQueryHandler,
+			GetAllCouriersQueryHandler:        getAllCouriersQueryHandler,
+			GetNotCompletedOrdersQueryHandler: getNotCompletedOrdersQueryHandler,
+		},
+		Jobs: Jobs{
+			AssignOrdersJob: assignOrdersJob,
+			MoveCouriersJob: moveCouriersJob,
 		},
 	}
 
