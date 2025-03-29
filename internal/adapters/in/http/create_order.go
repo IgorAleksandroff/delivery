@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Server) CreateOrder(c echo.Context) error {
-	createOrderCommand, err := usecases.NewCreateOrderCommand(uuid.New(), "Несуществующая")
+	createOrderCommand, err := usecases.NewCreateOrderCommand(uuid.New(), "Бажная")
 	if err != nil {
 		return problems.NewBadRequest(err.Error())
 	}

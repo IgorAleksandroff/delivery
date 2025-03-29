@@ -61,12 +61,16 @@ VALUES ('407f68be-5adf-4e72-81bc-b1d8e9574cf8', 'Авто', 'c24d3116-a75c-4a4b-
 # gRPC Client
 ```
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 export PATH="$PATH:$(go env GOPATH)/bin"
-protoc --proto_path=src --go_out=out --go_opt=paths=source_relative foo.proto bar/baz.proto
-protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative helloworld/helloworld.proto
-protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative https://gitlab.com/microarch-ru/ddd-in-practice/system-design/-/raw/main/services/discount/contracts/grpc.proto?ref_type=heads
-```
 
+curl -o ./api/proto/geo_service.proto https://gitlab.com/microarch-ru/ddd-in-practice/system-design/-/raw/main/services/geo/contracts/contract.proto
+protoc --go_out=./pkg/clients/geo --go-grpc_out=./pkg/clients/geo ./api/proto/geo_service.proto
+
+```
+```
+grpcurl -plaintext -proto ./api/proto/geo_service.proto -d '{"Street": "Бажная"}' localhost:5004 geo.Geo/GetGeolocation
+```
 # Тестирование
 ```
 mockery --all --case=underscore
