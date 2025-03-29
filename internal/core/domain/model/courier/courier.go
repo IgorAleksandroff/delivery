@@ -18,11 +18,11 @@ const (
 )
 
 type Courier struct {
-	ID        uuid.UUID
-	Name      string
-	Transport *Transport
-	Location  kernel.Location
-	Status    Status
+	id        uuid.UUID
+	name      string
+	transport *Transport
+	location  kernel.Location
+	status    Status
 }
 
 var (
@@ -47,11 +47,11 @@ func NewCourier(name string, transportName string, transportSpeed int, location 
 	}
 
 	return &Courier{
-		ID:        uuid.New(),
-		Name:      name,
-		Transport: transport,
-		Location:  location,
-		Status:    StatusFree,
+		id:        uuid.New(),
+		name:      name,
+		transport: transport,
+		location:  location,
+		status:    StatusFree,
 	}, nil
 }
 
@@ -68,7 +68,7 @@ func (c *Courier) SetBusy() error {
 		return ErrCourierAlreadyBusy
 	}
 
-	c.Status = StatusBusy
+	c.status = StatusBusy
 	return nil
 }
 
@@ -77,7 +77,7 @@ func (c *Courier) SetFree() error {
 		return ErrCourierAlreadyFree
 	}
 
-	c.Status = StatusFree
+	c.status = StatusFree
 	return nil
 }
 
@@ -86,7 +86,7 @@ func (c *Courier) StepsToOrder(orderLocation kernel.Location) (steps int, _ erro
 		return steps, errs.NewValueIsRequiredError("orderLocation")
 	}
 
-	for c.Location != orderLocation {
+	for c.location != orderLocation {
 		err := c.Move(orderLocation)
 		if err != nil {
 			return steps, err
@@ -97,18 +97,22 @@ func (c *Courier) StepsToOrder(orderLocation kernel.Location) (steps int, _ erro
 }
 
 func (c *Courier) Move(target kernel.Location) error {
-	newLocation, err := c.Transport.Move(c.Location, target)
+	newLocation, err := c.transport.Move(c.location, target)
 	if err != nil {
 		return err
 	}
-	c.Location = newLocation
+	c.location = newLocation
 	return nil
 }
 
+func (c *Courier) ID() uuid.UUID {
+	return c.id
+}
+
 func (c *Courier) IsFree() bool {
-	return c.Status == StatusFree
+	return c.status == StatusFree
 }
 
 func (c *Courier) IsBusy() bool {
-	return c.Status == StatusBusy
+	return c.status == StatusBusy
 }
