@@ -3,7 +3,6 @@ package usecases
 import (
 	"context"
 	"errors"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
 	"strings"
 
 	"github.com/google/uuid"
@@ -17,16 +16,18 @@ var OrderAlreadyExists = errors.New("order already exists")
 
 type CreateOrderCommandHandler struct {
 	orderRepository ports.OrderRepository
+	geoClient       ports.GeoClient
 }
 
 func NewCreateOrderCommandHandler(
-	orderRepository ports.OrderRepository) (*CreateOrderCommandHandler, error) {
+	orderRepository ports.OrderRepository, geoClient ports.GeoClient) (*CreateOrderCommandHandler, error) {
 	if orderRepository == nil {
 		return nil, errs.NewValueIsRequiredError("orderRepository")
 	}
 
 	return &CreateOrderCommandHandler{
-		orderRepository: orderRepository}, nil
+		orderRepository: orderRepository,
+		geoClient:       geoClient}, nil
 }
 
 func (ch *CreateOrderCommandHandler) Handle(ctx context.Context, command CreateOrderCommand) error {
@@ -43,8 +44,11 @@ func (ch *CreateOrderCommandHandler) Handle(ctx context.Context, command CreateO
 		return OrderAlreadyExists
 	}
 
-	// Получили геопозицию из Geo. Пока ставим рандом значение
-	location := kernel.CreateRandomLocation()
+	// Получили геопозицию из Geo.
+	location, err := ch.geoClient.GetGeolocation(ctx, command.Street())
+	if err != nil {
+		return err
+	}
 
 	// Изменили
 	orderAggregate, err = order.NewOrder(command.orderID, location)
@@ -76,6 +80,10 @@ func NewCreateOrderCommand(orderID uuid.UUID, street string) (CreateOrderCommand
 		return CreateOrderCommand{}, errs.NewValueIsRequiredError("street")
 	}
 	return CreateOrderCommand{orderID: orderID, street: street, isSet: true}, nil
+}
+
+func (c CreateOrderCommand) Street() string {
+	return c.street
 }
 
 func (c CreateOrderCommand) isEmpty() bool {
