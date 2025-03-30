@@ -2,12 +2,12 @@ package courierrepo
 
 import (
 	"context"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/IgorAleksandroff/delivery/internal/adapters/postgres"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/courier"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
@@ -32,7 +32,10 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 func (r *Repository) Add(ctx context.Context, aggregate *courier.Courier) error {
 	dto := DomainToDTO(aggregate)
 
-	tx := postgres.GetTxFromContext(ctx, r.db)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db
+	}
 	err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Create(&dto).Error
 	if err != nil {
 		return err
@@ -43,7 +46,10 @@ func (r *Repository) Add(ctx context.Context, aggregate *courier.Courier) error 
 func (r *Repository) Update(ctx context.Context, aggregate *courier.Courier) error {
 	dto := DomainToDTO(aggregate)
 
-	tx := postgres.GetTxFromContext(ctx, r.db)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db
+	}
 	err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(&dto).Error
 	if err != nil {
 		return err
@@ -54,7 +60,10 @@ func (r *Repository) Update(ctx context.Context, aggregate *courier.Courier) err
 func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*courier.Courier, error) {
 	dto := CourierDTO{}
 
-	tx := postgres.GetTxFromContext(ctx, r.db)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db
+	}
 	result := tx.
 		Preload(clause.Associations).
 		Find(&dto, ID)
@@ -69,7 +78,10 @@ func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*courier.Courier, e
 func (r *Repository) GetAllInFreeStatus(ctx context.Context) ([]*courier.Courier, error) {
 	var dtos []CourierDTO
 
-	tx := postgres.GetTxFromContext(ctx, r.db)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db
+	}
 	result := tx.
 		Preload(clause.Associations).
 		Where("status = ?", courier.StatusFree).
