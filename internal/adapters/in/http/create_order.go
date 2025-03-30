@@ -7,11 +7,11 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/IgorAleksandroff/delivery/internal/adapters/in/http/problems"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
+	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 )
 
 func (s *Server) CreateOrder(c echo.Context) error {
-	createOrderCommand, err := usecases.NewCreateOrderCommand(uuid.New(), "Бажная")
+	createOrderCommand, err := commands.NewCreateOrderCommand(uuid.New(), "Бажная")
 	if err != nil {
 		return problems.NewBadRequest(err.Error())
 	}

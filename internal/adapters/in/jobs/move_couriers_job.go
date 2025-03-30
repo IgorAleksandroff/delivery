@@ -6,18 +6,18 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/robfig/cron/v3"
 
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
+	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
 var _ cron.Job = &MoveCouriersJob{}
 
 type MoveCouriersJob struct {
-	moveCouriersCommandHandler *usecases.MoveCouriersCommandHandler
+	moveCouriersCommandHandler *commands.MoveCouriersCommandHandler
 }
 
 func NewMoveCouriersJob(
-	moveCouriersCommandHandler *usecases.MoveCouriersCommandHandler) (*MoveCouriersJob, error) {
+	moveCouriersCommandHandler *commands.MoveCouriersCommandHandler) (*MoveCouriersJob, error) {
 	if moveCouriersCommandHandler == nil {
 		return nil, errs.NewValueIsRequiredError("moveCouriersCommandHandler")
 	}
@@ -28,7 +28,7 @@ func NewMoveCouriersJob(
 
 func (j *MoveCouriersJob) Run() {
 	ctx := context.Background()
-	command, err := usecases.NewMoveCouriersCommand()
+	command, err := commands.NewMoveCouriersCommand()
 	if err != nil {
 		log.Error(err)
 	}

@@ -1,20 +1,20 @@
 package http
 
 import (
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
+	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
 type Server struct {
-	createOrderCommandHandler *usecases.CreateOrderCommandHandler
+	createOrderCommandHandler *commands.CreateOrderCommandHandler
 
 	getAllCouriersQueryHandler        *queries.GetAllCouriersQueryHandler
 	getNotCompletedOrdersQueryHandler *queries.GetNotCompletedOrdersQueryHandler
 }
 
 func NewServer(
-	createOrderCommandHandler *usecases.CreateOrderCommandHandler,
+	createOrderCommandHandler *commands.CreateOrderCommandHandler,
 
 	getAllCouriersQueryHandler *queries.GetAllCouriersQueryHandler,
 	getNotCompletedOrdersQueryHandler *queries.GetNotCompletedOrdersQueryHandler,

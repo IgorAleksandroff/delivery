@@ -11,7 +11,7 @@ import (
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
+	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
@@ -38,9 +38,9 @@ type Repositories struct {
 }
 
 type CommandHandlers struct {
-	AssignOrdersCommandHandler *usecases.AssignOrdersCommandHandler
-	CreateOrderCommandHandler  *usecases.CreateOrderCommandHandler
-	MoveCouriersCommandHandler *usecases.MoveCouriersCommandHandler
+	AssignOrdersCommandHandler *commands.AssignOrdersCommandHandler
+	CreateOrderCommandHandler  *commands.CreateOrderCommandHandler
+	MoveCouriersCommandHandler *commands.MoveCouriersCommandHandler
 }
 
 type QueryHandlers struct {
@@ -84,18 +84,18 @@ func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionR
 	}
 
 	// Command Handlers
-	createOrderCommandHandler, err := usecases.NewCreateOrderCommandHandler(orderRepository, geoClient)
+	createOrderCommandHandler, err := commands.NewCreateOrderCommandHandler(orderRepository, geoClient)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
 
-	assignOrdersCommandHandler, err := usecases.NewAssignOrdersCommandHandler(
+	assignOrdersCommandHandler, err := commands.NewAssignOrdersCommandHandler(
 		unitOfWork, orderRepository, courierRepository, orderDispatcher)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
 
-	moveCouriersCommandHandler, err := usecases.NewMoveCouriersCommandHandler(
+	moveCouriersCommandHandler, err := commands.NewMoveCouriersCommandHandler(
 		unitOfWork, orderRepository, courierRepository)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
