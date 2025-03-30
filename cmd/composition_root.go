@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/IgorAleksandroff/delivery/internal/adapters/in/jobs"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/in/kafka"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/grpc/geo"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
@@ -25,6 +26,7 @@ type CompositionRoot struct {
 	QueryHandlers   QueryHandlers
 	Clients         Clients
 	Jobs            Jobs
+	Consumers       Consumers
 }
 
 type DomainServices struct {
@@ -57,7 +59,11 @@ type Jobs struct {
 	MoveCouriersJob cron.Job
 }
 
-func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionRoot {
+type Consumers struct {
+	BasketConfirmedConsumer *kafka.BasketConfirmedConsumer
+}
+
+func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	// Domain Services
 	orderDispatcher := services.NewOrderDispatcher()
 
@@ -78,7 +84,7 @@ func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionR
 	}
 
 	// Grpc Clients
-	geoClient, err := geo.NewClient(geoServiceGrpcHost)
+	geoClient, err := geo.NewClient(cfg.GeoServiceGrpcHost)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
@@ -123,6 +129,13 @@ func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionR
 		log.Fatalf("run application error: %s", err)
 	}
 
+	// Kafka Consumers
+	basketConfirmedConsumer, err := kafka.NewBasketConfirmedConsumer(cfg.KafkaHost, cfg.KafkaConsumerGroup,
+		cfg.KafkaBasketConfirmedTopic, createOrderCommandHandler)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
 	compositionRoot := CompositionRoot{
 		DomainServices: DomainServices{
 			OrderDispatcher: orderDispatcher,
@@ -147,6 +160,9 @@ func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionR
 		Jobs: Jobs{
 			AssignOrdersJob: assignOrdersJob,
 			MoveCouriersJob: moveCouriersJob,
+		},
+		Consumers: Consumers{
+			BasketConfirmedConsumer: basketConfirmedConsumer,
 		},
 	}
 

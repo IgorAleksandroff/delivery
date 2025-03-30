@@ -24,28 +24,39 @@ import (
 )
 
 func main() {
-	httpPort := goDotEnvVariable("HTTP_PORT")
-	dbHost := goDotEnvVariable("DB_HOST")
-	dbPort := goDotEnvVariable("DB_PORT")
-	dbUser := goDotEnvVariable("DB_USER")
-	dbPassword := goDotEnvVariable("DB_PASSWORD")
-	dbDbName := goDotEnvVariable("DB_DBNAME")
-	dbSslMode := goDotEnvVariable("DB_SSLMODE")
-	geoServiceGrpcHost := goDotEnvVariable("GEO_SERVICE_GRPC_HOST")
+	cfg := getConfigs()
 
-	connectionString, err := makeConnectionString(dbHost, dbPort, dbUser, dbPassword, dbDbName, dbSslMode)
+	connectionString, err := makeConnectionString(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPassword, cfg.DbDbName, cfg.DbSslMode)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	crateDbIfNotExists(dbHost, dbPort, dbUser, dbPassword, dbDbName, dbSslMode)
+	crateDbIfNotExists(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPassword, cfg.DbDbName, cfg.DbSslMode)
 	gormDb := mustGormOpen(connectionString)
 	mustAutoMigrate(gormDb)
 
-	compositionRoot := cmd.NewCompositionRoot(gormDb, geoServiceGrpcHost)
+	compositionRoot := cmd.NewCompositionRoot(gormDb, cfg)
 
 	startCron(compositionRoot)
-	startWebServer(compositionRoot, httpPort)
+	startKafkaConsumer(compositionRoot)
+	startWebServer(compositionRoot, cfg.HttpPort)
+}
+
+func getConfigs() cmd.Config {
+	config := cmd.Config{
+		HttpPort:                  goDotEnvVariable("HTTP_PORT"),
+		DbHost:                    goDotEnvVariable("DB_HOST"),
+		DbPort:                    goDotEnvVariable("DB_PORT"),
+		DbUser:                    goDotEnvVariable("DB_USER"),
+		DbPassword:                goDotEnvVariable("DB_PASSWORD"),
+		DbDbName:                  goDotEnvVariable("DB_DBNAME"),
+		DbSslMode:                 goDotEnvVariable("DB_SSLMODE"),
+		GeoServiceGrpcHost:        goDotEnvVariable("GEO_SERVICE_GRPC_HOST"),
+		KafkaHost:                 goDotEnvVariable("KAFKA_HOST"),
+		KafkaConsumerGroup:        goDotEnvVariable("KAFKA_CONSUMER_GROUP"),
+		KafkaBasketConfirmedTopic: goDotEnvVariable("KAFKA_BASKET_CONFIRMED_TOPIC"),
+	}
+	return config
 }
 
 func startCron(compositionRoot cmd.CompositionRoot) {
@@ -59,6 +70,14 @@ func startCron(compositionRoot cmd.CompositionRoot) {
 		log.Fatalf("ошибка при добавлении задачи: %v", err)
 	}
 	c.Start()
+}
+
+func startKafkaConsumer(compositionRoot cmd.CompositionRoot) {
+	go func() {
+		if err := compositionRoot.Consumers.BasketConfirmedConsumer.Consume(); err != nil {
+			log.Fatalf("Kafka consumer error: %v", err)
+		}
+	}()
 }
 
 func startWebServer(compositionRoot cmd.CompositionRoot, port string) {
