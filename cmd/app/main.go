@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -25,7 +24,6 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
 	httpPort := goDotEnvVariable("HTTP_PORT")
 	dbHost := goDotEnvVariable("DB_HOST")
 	dbPort := goDotEnvVariable("DB_PORT")
@@ -33,19 +31,18 @@ func main() {
 	dbPassword := goDotEnvVariable("DB_PASSWORD")
 	dbDbName := goDotEnvVariable("DB_DBNAME")
 	dbSslMode := goDotEnvVariable("DB_SSLMODE")
+	geoServiceGrpcHost := goDotEnvVariable("GEO_SERVICE_GRPC_HOST")
+
 	connectionString, err := makeConnectionString(dbHost, dbPort, dbUser, dbPassword, dbDbName, dbSslMode)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	crateDbIfNotExists(connectionString, dbDbName)
+	crateDbIfNotExists(dbHost, dbPort, dbUser, dbPassword, dbDbName, dbSslMode)
 	gormDb := mustGormOpen(connectionString)
 	mustAutoMigrate(gormDb)
 
-	compositionRoot := cmd.NewCompositionRoot(
-		ctx,
-		gormDb,
-	)
+	compositionRoot := cmd.NewCompositionRoot(gormDb, geoServiceGrpcHost)
 
 	startCron(compositionRoot)
 	startWebServer(compositionRoot, httpPort)
@@ -199,8 +196,13 @@ func mustAutoMigrate(db *gorm.DB) {
 	}
 }
 
-func crateDbIfNotExists(connectionString, dbName string) {
-	db, err := sql.Open("postgres", connectionString)
+func crateDbIfNotExists(host string, port string, user string,
+	password string, dbName string, sslMode string) {
+	dsn, err := makeConnectionString(host, port, user, password, "postgres", sslMode)
+	if err != nil {
+		log.Fatalf("Ошибка подключения к PostgreSQL: %v", err)
+	}
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("Ошибка подключения к PostgreSQL: %v", err)
 	}

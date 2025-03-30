@@ -1,18 +1,18 @@
 package cmd
 
 import (
-	"context"
+	"log"
+
+	"github.com/robfig/cron/v3"
+	"gorm.io/gorm"
+
 	"github.com/IgorAleksandroff/delivery/internal/adapters/in/jobs"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/grpc/geo"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
-	"github.com/robfig/cron/v3"
-	"log"
-
-	"gorm.io/gorm"
-
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
@@ -23,6 +23,7 @@ type CompositionRoot struct {
 	Repositories    Repositories
 	CommandHandlers CommandHandlers
 	QueryHandlers   QueryHandlers
+	Clients         Clients
 	Jobs            Jobs
 }
 
@@ -47,12 +48,16 @@ type QueryHandlers struct {
 	GetNotCompletedOrdersQueryHandler *queries.GetNotCompletedOrdersQueryHandler
 }
 
+type Clients struct {
+	GeoClient ports.GeoClient
+}
+
 type Jobs struct {
 	AssignOrdersJob cron.Job
 	MoveCouriersJob cron.Job
 }
 
-func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
+func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionRoot {
 	// Domain Services
 	orderDispatcher := services.NewOrderDispatcher()
 
@@ -72,8 +77,14 @@ func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 		log.Fatalf("run application error: %s", err)
 	}
 
+	// Grpc Clients
+	geoClient, err := geo.NewClient(geoServiceGrpcHost)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
 	// Command Handlers
-	createOrderCommandHandler, err := usecases.NewCreateOrderCommandHandler(orderRepository)
+	createOrderCommandHandler, err := usecases.NewCreateOrderCommandHandler(orderRepository, geoClient)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
@@ -129,6 +140,9 @@ func NewCompositionRoot(ctx context.Context, gormDb *gorm.DB) CompositionRoot {
 		QueryHandlers: QueryHandlers{
 			GetAllCouriersQueryHandler:        getAllCouriersQueryHandler,
 			GetNotCompletedOrdersQueryHandler: getNotCompletedOrdersQueryHandler,
+		},
+		Clients: Clients{
+			GeoClient: geoClient,
 		},
 		Jobs: Jobs{
 			AssignOrdersJob: assignOrdersJob,
