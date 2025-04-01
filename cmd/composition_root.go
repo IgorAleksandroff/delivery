@@ -7,11 +7,12 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/IgorAleksandroff/delivery/internal/adapters/in/jobs"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/in/kafka"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/grpc/geo"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases"
+	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
@@ -25,6 +26,7 @@ type CompositionRoot struct {
 	QueryHandlers   QueryHandlers
 	Clients         Clients
 	Jobs            Jobs
+	Consumers       Consumers
 }
 
 type DomainServices struct {
@@ -38,9 +40,9 @@ type Repositories struct {
 }
 
 type CommandHandlers struct {
-	AssignOrdersCommandHandler *usecases.AssignOrdersCommandHandler
-	CreateOrderCommandHandler  *usecases.CreateOrderCommandHandler
-	MoveCouriersCommandHandler *usecases.MoveCouriersCommandHandler
+	AssignOrdersCommandHandler *commands.AssignOrdersCommandHandler
+	CreateOrderCommandHandler  *commands.CreateOrderCommandHandler
+	MoveCouriersCommandHandler *commands.MoveCouriersCommandHandler
 }
 
 type QueryHandlers struct {
@@ -57,7 +59,11 @@ type Jobs struct {
 	MoveCouriersJob cron.Job
 }
 
-func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionRoot {
+type Consumers struct {
+	BasketConfirmedConsumer *kafka.BasketConfirmedConsumer
+}
+
+func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	// Domain Services
 	orderDispatcher := services.NewOrderDispatcher()
 
@@ -78,24 +84,24 @@ func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionR
 	}
 
 	// Grpc Clients
-	geoClient, err := geo.NewClient(geoServiceGrpcHost)
+	geoClient, err := geo.NewClient(cfg.GeoServiceGrpcHost)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
 
 	// Command Handlers
-	createOrderCommandHandler, err := usecases.NewCreateOrderCommandHandler(orderRepository, geoClient)
+	createOrderCommandHandler, err := commands.NewCreateOrderCommandHandler(orderRepository, geoClient)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
 
-	assignOrdersCommandHandler, err := usecases.NewAssignOrdersCommandHandler(
+	assignOrdersCommandHandler, err := commands.NewAssignOrdersCommandHandler(
 		unitOfWork, orderRepository, courierRepository, orderDispatcher)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
 
-	moveCouriersCommandHandler, err := usecases.NewMoveCouriersCommandHandler(
+	moveCouriersCommandHandler, err := commands.NewMoveCouriersCommandHandler(
 		unitOfWork, orderRepository, courierRepository)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
@@ -119,6 +125,13 @@ func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionR
 	}
 
 	moveCouriersJob, err := jobs.NewMoveCouriersJob(moveCouriersCommandHandler)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	// Kafka Consumers
+	basketConfirmedConsumer, err := kafka.NewBasketConfirmedConsumer(cfg.KafkaHost, cfg.KafkaConsumerGroup,
+		cfg.KafkaBasketConfirmedTopic, createOrderCommandHandler)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
@@ -147,6 +160,9 @@ func NewCompositionRoot(gormDb *gorm.DB, geoServiceGrpcHost string) CompositionR
 		Jobs: Jobs{
 			AssignOrdersJob: assignOrdersJob,
 			MoveCouriersJob: moveCouriersJob,
+		},
+		Consumers: Consumers{
+			BasketConfirmedConsumer: basketConfirmedConsumer,
 		},
 	}
 

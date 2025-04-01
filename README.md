@@ -71,6 +71,13 @@ protoc --go_out=./pkg/clients/geo --go-grpc_out=./pkg/clients/geo ./api/proto/ge
 ```
 grpcurl -plaintext -proto ./api/proto/geo_service.proto -d '{"Street": "Бажная"}' localhost:5004 geo.Geo/GetGeolocation
 ```
+# Kafka
+```
+curl -o ./api/proto/basket_confirmed.proto https://gitlab.com/microarch-ru/ddd-in-practice/system-design/-/raw/main/services/basket/contracts/basket_confirmed.proto
+```
+```
+protoc --go_out=./pkg/clients/queues ./api/proto/basket_confirmed.proto
+```
 # Тестирование
 ```
 mockery --all --case=underscore
