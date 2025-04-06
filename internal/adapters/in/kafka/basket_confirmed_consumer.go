@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
-	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
-	"github.com/IgorAleksandroff/delivery/pkg/clients/queues/queues/basketconfirmedpb"
+	"time"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
-	"time"
+
+	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
+	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
+	"github.com/IgorAleksandroff/delivery/pkg/clients/queues/queues/basketconfirmedpb"
 )
 
 type BasketConfirmedConsumer struct {
@@ -102,6 +104,5 @@ func (c *BasketConfirmedConsumer) consume() {
 }
 
 func createOrderID(basketID string) uuid.UUID {
-	// TODO: orderID == basketID???
 	return uuid.MustParse(basketID)
 }

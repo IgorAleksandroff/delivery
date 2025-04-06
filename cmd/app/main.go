@@ -55,6 +55,7 @@ func getConfigs() cmd.Config {
 		KafkaHost:                 goDotEnvVariable("KAFKA_HOST"),
 		KafkaConsumerGroup:        goDotEnvVariable("KAFKA_CONSUMER_GROUP"),
 		KafkaBasketConfirmedTopic: goDotEnvVariable("KAFKA_BASKET_CONFIRMED_TOPIC"),
+		KafkaOrderChangedTopic:    goDotEnvVariable("KAFKA_ORDER_CHANGED_TOPIC"),
 	}
 	return config
 }

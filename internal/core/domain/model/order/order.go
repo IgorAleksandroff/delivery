@@ -5,10 +5,15 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/IgorAleksandroff/delivery/internal/core/domain"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
 )
 
 type Status string
+
+func (s Status) String() string {
+	return string(s)
+}
 
 const (
 	StatusCreated   Status = "created"
@@ -21,6 +26,8 @@ type Order struct {
 	location  kernel.Location
 	status    Status
 	courierID *uuid.UUID
+
+	events []domain.Event
 }
 
 var (
@@ -78,6 +85,8 @@ func (o *Order) Complete() error {
 
 	o.status = StatusCompleted
 
+	o.raiseDomainEvent(NewCompletedDomainEvent(o))
+
 	return nil
 }
 
@@ -103,4 +112,16 @@ func (o *Order) IsAssigned() bool {
 
 func (o *Order) IsCompleted() bool {
 	return o.status == StatusCompleted
+}
+
+func (o *Order) ClearDomainEvents() {
+	o.events = []domain.Event{}
+}
+
+func (o *Order) GetDomainEvents() []domain.Event {
+	return o.events
+}
+
+func (o *Order) raiseDomainEvent(event domain.Event) {
+	o.events = append(o.events, event)
 }
