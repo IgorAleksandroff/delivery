@@ -104,6 +104,5 @@ func (c *BasketConfirmedConsumer) consume() {
 }
 
 func createOrderID(basketID string) uuid.UUID {
-	// TODO: orderID == basketID???
 	return uuid.MustParse(basketID)
 }
