@@ -3,12 +3,14 @@ package orderrepo
 import (
 	"context"
 	"errors"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 
 	"github.com/google/uuid"
+	"github.com/mehdihadeli/go-mediatr"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
@@ -41,7 +43,8 @@ func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
 	if err != nil {
 		return err
 	}
-	return nil
+
+	return r.publishDomainEvents(ctx, aggregate)
 }
 
 func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
@@ -55,7 +58,8 @@ func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 	if err != nil {
 		return err
 	}
-	return nil
+
+	return r.publishDomainEvents(ctx, aggregate)
 }
 
 func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error) {
@@ -122,4 +126,18 @@ func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order
 	}
 
 	return aggregates, nil
+}
+
+func (r *Repository) publishDomainEvents(ctx context.Context, aggregate domain.AggregateRoot) error {
+	for _, event := range aggregate.GetDomainEvents() {
+		switch event.(type) {
+		case order.CompletedDomainEvent:
+			err := mediatr.Publish[order.CompletedDomainEvent](ctx, event.(order.CompletedDomainEvent))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	aggregate.ClearDomainEvents()
+	return nil
 }
