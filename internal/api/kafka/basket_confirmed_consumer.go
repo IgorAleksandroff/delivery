@@ -4,15 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
-
+	"github.com/IgorAleksandroff/delivery/internal/core/usecases/commands"
+	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
+	"github.com/IgorAleksandroff/delivery/pkg/clients/queues/queues/basketconfirmedpb"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
-
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
-	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
-	"github.com/IgorAleksandroff/delivery/pkg/clients/queues/queues/basketconfirmedpb"
+	"time"
 )
 
 type BasketConfirmedConsumer struct {

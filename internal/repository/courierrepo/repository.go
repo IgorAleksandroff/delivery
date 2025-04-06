@@ -3,7 +3,7 @@ package courierrepo
 import (
 	"context"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/courier"
-	"github.com/IgorAleksandroff/delivery/internal/core/ports"
+	"github.com/IgorAleksandroff/delivery/internal/core/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	"github.com/IgorAleksandroff/delivery/internal/repository"
 	"github.com/google/uuid"
@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-var _ ports.CourierRepository = &Repository{}
+var _ commands.CourierRepository = &Repository{}
 
 type Repository struct {
 	db *gorm.DB

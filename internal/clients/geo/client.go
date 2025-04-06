@@ -9,12 +9,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
-	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	pb "github.com/IgorAleksandroff/delivery/pkg/clients/geo/geosrv/geopb"
 )
-
-var _ ports.GeoClient = &Client{}
 
 type Client struct {
 	conn     *grpc.ClientConn

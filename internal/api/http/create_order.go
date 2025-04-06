@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/IgorAleksandroff/delivery/internal/api/http/problems"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
+	"github.com/IgorAleksandroff/delivery/internal/core/usecases/commands"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"

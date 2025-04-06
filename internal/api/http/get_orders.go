@@ -3,7 +3,7 @@ package http
 import (
 	"errors"
 	"github.com/IgorAleksandroff/delivery/internal/api/http/problems"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
+	"github.com/IgorAleksandroff/delivery/internal/core/usecases/queries"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	servers "github.com/IgorAleksandroff/delivery/pkg/servers"
 	"github.com/labstack/echo/v4"

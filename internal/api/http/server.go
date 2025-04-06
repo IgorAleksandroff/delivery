@@ -1,23 +1,23 @@
 package http
 
 import (
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
+	"github.com/IgorAleksandroff/delivery/internal/core/usecases/commands"
+	queries2 "github.com/IgorAleksandroff/delivery/internal/core/usecases/queries"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
 type Server struct {
 	createOrderCommandHandler *commands.CreateOrderCommandHandler
 
-	getAllCouriersQueryHandler        *queries.GetAllCouriersQueryHandler
-	getNotCompletedOrdersQueryHandler *queries.GetNotCompletedOrdersQueryHandler
+	getAllCouriersQueryHandler        *queries2.GetAllCouriersQueryHandler
+	getNotCompletedOrdersQueryHandler *queries2.GetNotCompletedOrdersQueryHandler
 }
 
 func NewServer(
 	createOrderCommandHandler *commands.CreateOrderCommandHandler,
 
-	getAllCouriersQueryHandler *queries.GetAllCouriersQueryHandler,
-	getNotCompletedOrdersQueryHandler *queries.GetNotCompletedOrdersQueryHandler,
+	getAllCouriersQueryHandler *queries2.GetAllCouriersQueryHandler,
+	getNotCompletedOrdersQueryHandler *queries2.GetNotCompletedOrdersQueryHandler,
 ) (*Server, error) {
 	if createOrderCommandHandler == nil {
 		return nil, errs.NewValueIsRequiredError("createOrderCommandHandler")

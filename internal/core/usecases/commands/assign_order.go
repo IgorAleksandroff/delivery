@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
-	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
 )
@@ -18,15 +17,15 @@ var (
 
 type AssignOrdersCommandHandler struct {
 	unitOfWork        uow.UnitOfWork
-	orderRepository   ports.OrderRepository
-	courierRepository ports.CourierRepository
+	orderRepository   OrderRepository
+	courierRepository CourierRepository
 	orderDispatcher   *services.Dispatcher
 }
 
 func NewAssignOrdersCommandHandler(
 	unitOfWork uow.UnitOfWork,
-	orderRepository ports.OrderRepository,
-	courierRepository ports.CourierRepository,
+	orderRepository OrderRepository,
+	courierRepository CourierRepository,
 	orderDispatcher *services.Dispatcher,
 ) (*AssignOrdersCommandHandler, error) {
 	if unitOfWork == nil {

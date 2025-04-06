@@ -4,12 +4,11 @@ import (
 	"github.com/IgorAleksandroff/delivery/internal/api/kafka"
 	"github.com/IgorAleksandroff/delivery/internal/clients/geo"
 	kafkaout "github.com/IgorAleksandroff/delivery/internal/clients/kafka"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/eventhandlers"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
-	"github.com/IgorAleksandroff/delivery/internal/core/ports"
+	"github.com/IgorAleksandroff/delivery/internal/core/eventhandlers"
+	"github.com/IgorAleksandroff/delivery/internal/core/usecases/commands"
+	"github.com/IgorAleksandroff/delivery/internal/core/usecases/queries"
 	"github.com/IgorAleksandroff/delivery/internal/jobs"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
 	"github.com/IgorAleksandroff/delivery/internal/repository"
@@ -43,8 +42,8 @@ type DomainServices struct {
 
 type Repositories struct {
 	UnitOfWork        uow.UnitOfWork
-	OrderRepository   ports.OrderRepository
-	CourierRepository ports.CourierRepository
+	OrderRepository   commands.OrderRepository
+	CourierRepository commands.CourierRepository
 }
 
 type CommandHandlers struct {
@@ -59,7 +58,7 @@ type QueryHandlers struct {
 }
 
 type Clients struct {
-	GeoClient ports.GeoClient
+	GeoClient commands.GeoClient
 }
 
 type Jobs struct {
@@ -73,7 +72,7 @@ type Consumers struct {
 }
 
 type Producers struct {
-	OrderChangedProducer ports.OrderProducer
+	OrderChangedProducer eventhandlers.OrderProducer
 }
 
 func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {

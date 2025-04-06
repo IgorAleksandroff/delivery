@@ -5,21 +5,20 @@ import (
 	"errors"
 	"log"
 
-	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
 )
 
 type MoveCouriersCommandHandler struct {
 	unitOfWork        uow.UnitOfWork
-	orderRepository   ports.OrderRepository
-	courierRepository ports.CourierRepository
+	orderRepository   OrderRepository
+	courierRepository CourierRepository
 }
 
 func NewMoveCouriersCommandHandler(
 	unitOfWork uow.UnitOfWork,
-	orderRepository ports.OrderRepository,
-	courierRepository ports.CourierRepository,
+	orderRepository OrderRepository,
+	courierRepository CourierRepository,
 ) (*MoveCouriersCommandHandler, error) {
 	if unitOfWork == nil {
 		return nil, errs.NewValueIsRequiredError("unitOfWork")

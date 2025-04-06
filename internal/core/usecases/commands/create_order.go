@@ -8,19 +8,18 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
-	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
 var OrderAlreadyExists = errors.New("order already exists")
 
 type CreateOrderCommandHandler struct {
-	orderRepository ports.OrderRepository
-	geoClient       ports.GeoClient
+	orderRepository OrderRepository
+	geoClient       GeoClient
 }
 
 func NewCreateOrderCommandHandler(
-	orderRepository ports.OrderRepository, geoClient ports.GeoClient) (*CreateOrderCommandHandler, error) {
+	orderRepository OrderRepository, geoClient GeoClient) (*CreateOrderCommandHandler, error) {
 	if orderRepository == nil {
 		return nil, errs.NewValueIsRequiredError("orderRepository")
 	}

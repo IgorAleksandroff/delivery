@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
-	"github.com/IgorAleksandroff/delivery/internal/core/ports"
+	"github.com/IgorAleksandroff/delivery/internal/core/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	"github.com/IgorAleksandroff/delivery/internal/repository"
 	"github.com/IgorAleksandroff/delivery/internal/repository/outbox"
@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-var _ ports.OrderRepository = &Repository{}
+var _ commands.OrderRepository = &Repository{}
 
 type Repository struct {
 	db *gorm.DB

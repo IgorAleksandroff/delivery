@@ -4,15 +4,14 @@ import (
 	"context"
 
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
-	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
 type OrderCompleted struct {
-	orderProducer ports.OrderProducer
+	orderProducer OrderProducer
 }
 
-func NewOrderCompleted(orderProducer ports.OrderProducer) (*OrderCompleted, error) {
+func NewOrderCompleted(orderProducer OrderProducer) (*OrderCompleted, error) {
 	if orderProducer == nil {
 		return nil, errs.NewValueIsRequiredError("orderProducer")
 	}

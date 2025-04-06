@@ -2,11 +2,11 @@ package jobs
 
 import (
 	"context"
+	"github.com/IgorAleksandroff/delivery/internal/core/usecases/commands"
 
 	"github.com/labstack/gommon/log"
 	"github.com/robfig/cron/v3"
 
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
