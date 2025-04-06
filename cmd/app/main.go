@@ -71,6 +71,10 @@ func startCron(compositionRoot cmd.CompositionRoot) {
 	if err != nil {
 		log.Fatalf("ошибка при добавлении задачи: %v", err)
 	}
+	_, err = c.AddFunc("@every 10s", compositionRoot.Jobs.OutboxJob.Run)
+	if err != nil {
+		log.Fatalf("ошибка при добавлении задачи: %v", err)
+	}
 	c.Start()
 }
 

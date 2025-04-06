@@ -10,23 +10,23 @@ import (
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
-type IEventRegistry interface {
+type EventRegistry interface {
 	DecodeDomainEvent(event *Message) (domain.Event, error)
 }
 
-var _ IEventRegistry = &EventRegistry{}
+var _ EventRegistry = &Registry{}
 
-type EventRegistry struct {
+type Registry struct {
 	EventRegistry map[string]reflect.Type
 }
 
-func NewEventRegistry() (*EventRegistry, error) {
-	return &EventRegistry{
+func NewEventRegistry() (*Registry, error) {
+	return &Registry{
 		EventRegistry: make(map[string]reflect.Type),
 	}, nil
 }
 
-func (r *EventRegistry) RegisterDomainEvent(eventType reflect.Type) error {
+func (r *Registry) RegisterDomainEvent(eventType reflect.Type) error {
 	if eventType == nil {
 		return errs.NewValueIsRequiredError("eventType")
 	}
@@ -62,7 +62,7 @@ func EncodeDomainEvents(domainEvent []domain.Event) ([]Message, error) {
 	return outboxMessages, nil
 }
 
-func (r *EventRegistry) DecodeDomainEvent(outboxMessage *Message) (domain.Event, error) {
+func (r *Registry) DecodeDomainEvent(outboxMessage *Message) (domain.Event, error) {
 	t, ok := r.EventRegistry[outboxMessage.Name]
 	if !ok {
 		return nil, fmt.Errorf("unknown outboxMessage type: %s", outboxMessage.Name)

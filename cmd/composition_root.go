@@ -1,14 +1,16 @@
 package cmd
 
 import (
+	"github.com/IgorAleksandroff/delivery/internal/adapters/jobs"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/eventhandlers"
 	"log"
+	"reflect"
 
 	"github.com/mehdihadeli/go-mediatr"
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
 
-	"github.com/IgorAleksandroff/delivery/internal/adapters/in/jobs"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/in/kafka"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/grpc/geo"
 	kafkaout "github.com/IgorAleksandroff/delivery/internal/adapters/out/kafka"
@@ -32,6 +34,7 @@ type CompositionRoot struct {
 	Jobs            Jobs
 	Consumers       Consumers
 	Producers       Producers
+	EventRegistry   outbox.EventRegistry
 
 	closeFns []func() error
 }
@@ -64,6 +67,7 @@ type Clients struct {
 type Jobs struct {
 	AssignOrdersJob cron.Job
 	MoveCouriersJob cron.Job
+	OutboxJob       cron.Job
 }
 
 type Consumers struct {
@@ -78,6 +82,16 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	// Domain Services
 	orderDispatcher := services.NewOrderDispatcher()
 
+	// Message Registry
+	eventRegistry, err := outbox.NewEventRegistry()
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+	err = eventRegistry.RegisterDomainEvent(reflect.TypeOf(order.CompletedDomainEvent{}))
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
 	// Repositories
 	unitOfWork, err := postgres.NewUnitOfWork(gormDb)
 	if err != nil {
@@ -90,6 +104,11 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	}
 
 	courierRepository, err := courierrepo.NewRepository(gormDb)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	outboxRepository, err := outbox.NewRepository(gormDb)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
@@ -136,6 +155,11 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	}
 
 	moveCouriersJob, err := jobs.NewMoveCouriersJob(moveCouriersCommandHandler)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	outboxJob, err := jobs.NewOutboxJob(outboxRepository, eventRegistry)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
@@ -190,6 +214,7 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 		Jobs: Jobs{
 			AssignOrdersJob: assignOrdersJob,
 			MoveCouriersJob: moveCouriersJob,
+			OutboxJob:       outboxJob,
 		},
 		Consumers: Consumers{
 			BasketConfirmedConsumer: basketConfirmedConsumer,
@@ -197,6 +222,7 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 		Producers: Producers{
 			OrderChangedProducer: orderKafkaProducer,
 		},
+		EventRegistry: eventRegistry,
 	}
 
 	// Close
