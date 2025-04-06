@@ -1,19 +1,23 @@
 package cmd
 
 import (
+	"github.com/IgorAleksandroff/delivery/internal/core/application/eventhandlers"
 	"log"
 
+	"github.com/mehdihadeli/go-mediatr"
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
 
 	"github.com/IgorAleksandroff/delivery/internal/adapters/in/jobs"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/in/kafka"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/grpc/geo"
+	kafkaout "github.com/IgorAleksandroff/delivery/internal/adapters/out/kafka"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
@@ -27,6 +31,9 @@ type CompositionRoot struct {
 	Clients         Clients
 	Jobs            Jobs
 	Consumers       Consumers
+	Producers       Producers
+
+	closeFns []func() error
 }
 
 type DomainServices struct {
@@ -61,6 +68,10 @@ type Jobs struct {
 
 type Consumers struct {
 	BasketConfirmedConsumer *kafka.BasketConfirmedConsumer
+}
+
+type Producers struct {
+	OrderChangedProducer ports.OrderProducer
 }
 
 func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
@@ -136,6 +147,25 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 		log.Fatalf("run application error: %s", err)
 	}
 
+	// Kafka Producers
+	brokers := []string{cfg.KafkaHost}
+	orderKafkaProducer, err := kafkaout.NewOrderProducer(brokers, cfg.KafkaOrderChangedTopic)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	// Domain Event Handlers
+	orderDomainEventHandler, err := eventhandlers.NewOrderCompleted(orderKafkaProducer)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
+	// Mediatr Subscribes
+	err = mediatr.RegisterNotificationHandlers[order.CompletedDomainEvent](orderDomainEventHandler)
+	if err != nil {
+		log.Fatalf("run application error: %s", err)
+	}
+
 	compositionRoot := CompositionRoot{
 		DomainServices: DomainServices{
 			OrderDispatcher: orderDispatcher,
@@ -164,7 +194,22 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 		Consumers: Consumers{
 			BasketConfirmedConsumer: basketConfirmedConsumer,
 		},
+		Producers: Producers{
+			OrderChangedProducer: orderKafkaProducer,
+		},
 	}
 
+	// Close
+	compositionRoot.closeFns = append(compositionRoot.closeFns, geoClient.Close)
+	compositionRoot.closeFns = append(compositionRoot.closeFns, basketConfirmedConsumer.Close)
+	compositionRoot.closeFns = append(compositionRoot.closeFns, orderKafkaProducer.Close)
 	return compositionRoot
+}
+
+func (cr *CompositionRoot) Close() {
+	for _, fn := range cr.closeFns {
+		if err := fn(); err != nil {
+			log.Printf("ошибка при закрытии зависимости: %v", err)
+		}
+	}
 }

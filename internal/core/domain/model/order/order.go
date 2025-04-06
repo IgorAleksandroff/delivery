@@ -10,6 +10,10 @@ import (
 
 type Status string
 
+func (s Status) String() string {
+	return string(s)
+}
+
 const (
 	StatusCreated   Status = "created"
 	StatusAssigned  Status = "assigned"

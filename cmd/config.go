@@ -12,4 +12,5 @@ type Config struct {
 	KafkaHost                 string
 	KafkaConsumerGroup        string
 	KafkaBasketConfirmedTopic string
+	KafkaOrderChangedTopic    string
 }

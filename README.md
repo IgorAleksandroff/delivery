@@ -78,6 +78,9 @@ curl -o ./api/proto/basket_confirmed.proto https://gitlab.com/microarch-ru/ddd-i
 ```
 protoc --go_out=./pkg/clients/queues ./api/proto/basket_confirmed.proto
 ```
+```
+protoc --go_out=./pkg/clients/queues ./api/proto/order_status_changed.proto
+```
 # Тестирование
 ```
 mockery --all --case=underscore
