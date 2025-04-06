@@ -39,7 +39,8 @@ func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
 	}
 
 	tx := postgres.GetTxFromContext(ctx)
-	if tx == nil {
+	isTransaction := tx == nil
+	if isTransaction {
 		tx = r.db.Begin()
 		defer tx.Rollback()
 	}
@@ -56,7 +57,11 @@ func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
 		}
 	}
 
-	return tx.Commit().Error
+	if isTransaction {
+		return tx.Commit().Error
+	}
+
+	return nil
 }
 
 func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
@@ -67,7 +72,8 @@ func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 	}
 
 	tx := postgres.GetTxFromContext(ctx)
-	if tx == nil {
+	isTransaction := tx == nil
+	if isTransaction {
 		tx = r.db.Begin()
 		defer tx.Rollback()
 	}
@@ -84,7 +90,11 @@ func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 		}
 	}
 
-	return tx.Commit().Error
+	if isTransaction {
+		return tx.Commit().Error
+	}
+
+	return nil
 }
 
 func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error) {
