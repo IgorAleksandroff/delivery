@@ -1,13 +1,11 @@
 package http
 
 import (
-	"net/http"
-
+	"github.com/IgorAleksandroff/delivery/internal/api/http/problems"
+	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-
-	"github.com/IgorAleksandroff/delivery/internal/adapters/in/http/problems"
-	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
+	"net/http"
 )
 
 func (s *Server) CreateOrder(c echo.Context) error {

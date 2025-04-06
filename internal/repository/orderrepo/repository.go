@@ -3,16 +3,14 @@ package orderrepo
 import (
 	"context"
 	"errors"
-
-	"github.com/google/uuid"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
+	"github.com/IgorAleksandroff/delivery/internal/repository"
+	"github.com/IgorAleksandroff/delivery/internal/repository/outbox"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var _ ports.OrderRepository = &Repository{}
@@ -38,7 +36,7 @@ func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
 		return err
 	}
 
-	tx := postgres.GetTxFromContext(ctx)
+	tx := repository.GetTxFromContext(ctx)
 	isTransaction := tx == nil
 	if isTransaction {
 		tx = r.db.Begin()
@@ -71,7 +69,7 @@ func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 		return err
 	}
 
-	tx := postgres.GetTxFromContext(ctx)
+	tx := repository.GetTxFromContext(ctx)
 	isTransaction := tx == nil
 	if isTransaction {
 		tx = r.db.Begin()
@@ -100,7 +98,7 @@ func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error) {
 	dto := OrderDTO{}
 
-	tx := postgres.GetTxFromContext(ctx)
+	tx := repository.GetTxFromContext(ctx)
 	if tx == nil {
 		tx = r.db
 	}
@@ -118,7 +116,7 @@ func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error
 func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order, error) {
 	dto := OrderDTO{}
 
-	tx := postgres.GetTxFromContext(ctx)
+	tx := repository.GetTxFromContext(ctx)
 	if tx == nil {
 		tx = r.db
 	}
@@ -140,7 +138,7 @@ func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order,
 func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order, error) {
 	var dtos []OrderDTO
 
-	tx := postgres.GetTxFromContext(ctx)
+	tx := repository.GetTxFromContext(ctx)
 	if tx == nil {
 		tx = r.db
 	}

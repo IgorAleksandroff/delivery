@@ -2,14 +2,12 @@ package http
 
 import (
 	"errors"
-	"net/http"
-
-	"github.com/labstack/echo/v4"
-
-	"github.com/IgorAleksandroff/delivery/internal/adapters/in/http/problems"
+	"github.com/IgorAleksandroff/delivery/internal/api/http/problems"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	servers "github.com/IgorAleksandroff/delivery/pkg/servers"
+	"github.com/labstack/echo/v4"
+	"net/http"
 )
 
 func (s *Server) GetOrders(c echo.Context) error {

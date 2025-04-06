@@ -2,9 +2,9 @@ package jobs
 
 import (
 	"context"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
+	"github.com/IgorAleksandroff/delivery/internal/repository/outbox"
 	"github.com/labstack/gommon/log"
 	"github.com/mehdihadeli/go-mediatr"
 	"github.com/robfig/cron/v3"

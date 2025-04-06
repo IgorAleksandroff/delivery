@@ -1,28 +1,26 @@
 package cmd
 
 import (
-	"github.com/IgorAleksandroff/delivery/internal/adapters/jobs"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
+	"github.com/IgorAleksandroff/delivery/internal/api/kafka"
+	"github.com/IgorAleksandroff/delivery/internal/clients/geo"
+	kafkaout "github.com/IgorAleksandroff/delivery/internal/clients/kafka"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/eventhandlers"
-	"log"
-	"reflect"
-
-	"github.com/mehdihadeli/go-mediatr"
-	"github.com/robfig/cron/v3"
-	"gorm.io/gorm"
-
-	"github.com/IgorAleksandroff/delivery/internal/adapters/in/kafka"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/grpc/geo"
-	kafkaout "github.com/IgorAleksandroff/delivery/internal/adapters/out/kafka"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
+	"github.com/IgorAleksandroff/delivery/internal/jobs"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
+	"github.com/IgorAleksandroff/delivery/internal/repository"
+	"github.com/IgorAleksandroff/delivery/internal/repository/courierrepo"
+	"github.com/IgorAleksandroff/delivery/internal/repository/orderrepo"
+	"github.com/IgorAleksandroff/delivery/internal/repository/outbox"
+	"github.com/mehdihadeli/go-mediatr"
+	"github.com/robfig/cron/v3"
+	"gorm.io/gorm"
+	"log"
+	"reflect"
 )
 
 type CompositionRoot struct {
@@ -93,7 +91,7 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	}
 
 	// Repositories
-	unitOfWork, err := postgres.NewUnitOfWork(gormDb)
+	unitOfWork, err := repository.NewUnitOfWork(gormDb)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}

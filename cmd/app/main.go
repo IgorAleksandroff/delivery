@@ -3,10 +3,13 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
-	"net/http"
-	"os"
-
+	"github.com/IgorAleksandroff/delivery/cmd"
+	httpin "github.com/IgorAleksandroff/delivery/internal/api/http"
+	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
+	"github.com/IgorAleksandroff/delivery/internal/repository/courierrepo"
+	"github.com/IgorAleksandroff/delivery/internal/repository/orderrepo"
+	"github.com/IgorAleksandroff/delivery/internal/repository/outbox"
+	servers "github.com/IgorAleksandroff/delivery/pkg/servers"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -15,13 +18,8 @@ import (
 	"github.com/robfig/cron/v3"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"github.com/IgorAleksandroff/delivery/cmd"
-	httpin "github.com/IgorAleksandroff/delivery/internal/adapters/in/http"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/courierrepo"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
-	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
-	servers "github.com/IgorAleksandroff/delivery/pkg/servers"
+	"net/http"
+	"os"
 )
 
 func main() {

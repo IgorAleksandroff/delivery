@@ -2,15 +2,13 @@ package courierrepo
 
 import (
 	"context"
-	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
-
-	"github.com/google/uuid"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/courier"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
+	"github.com/IgorAleksandroff/delivery/internal/repository"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var _ ports.CourierRepository = &Repository{}
@@ -32,7 +30,7 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 func (r *Repository) Add(ctx context.Context, aggregate *courier.Courier) error {
 	dto := DomainToDTO(aggregate)
 
-	tx := postgres.GetTxFromContext(ctx)
+	tx := repository.GetTxFromContext(ctx)
 	if tx == nil {
 		tx = r.db
 	}
@@ -46,7 +44,7 @@ func (r *Repository) Add(ctx context.Context, aggregate *courier.Courier) error 
 func (r *Repository) Update(ctx context.Context, aggregate *courier.Courier) error {
 	dto := DomainToDTO(aggregate)
 
-	tx := postgres.GetTxFromContext(ctx)
+	tx := repository.GetTxFromContext(ctx)
 	if tx == nil {
 		tx = r.db
 	}
@@ -60,7 +58,7 @@ func (r *Repository) Update(ctx context.Context, aggregate *courier.Courier) err
 func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*courier.Courier, error) {
 	dto := CourierDTO{}
 
-	tx := postgres.GetTxFromContext(ctx)
+	tx := repository.GetTxFromContext(ctx)
 	if tx == nil {
 		tx = r.db
 	}
@@ -78,7 +76,7 @@ func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*courier.Courier, e
 func (r *Repository) GetAllInFreeStatus(ctx context.Context) ([]*courier.Courier, error) {
 	var dtos []CourierDTO
 
-	tx := postgres.GetTxFromContext(ctx)
+	tx := repository.GetTxFromContext(ctx)
 	if tx == nil {
 		tx = r.db
 	}
