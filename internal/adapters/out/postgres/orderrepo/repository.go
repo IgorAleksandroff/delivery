@@ -5,12 +5,11 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/mehdihadeli/go-mediatr"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
@@ -34,32 +33,58 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 
 func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
 	dto := DomainToDTO(aggregate)
-
-	tx := postgres.GetTxFromContext(ctx)
-	if tx == nil {
-		tx = r.db
-	}
-	err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Create(&dto).Error
+	outboxEvents, err := outbox.EncodeDomainEvents(aggregate.GetDomainEvents())
 	if err != nil {
 		return err
 	}
 
-	return r.publishDomainEvents(ctx, aggregate)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db.Begin()
+		defer tx.Rollback()
+	}
+
+	err = tx.Session(&gorm.Session{FullSaveAssociations: true}).Create(&dto).Error
+	if err != nil {
+		return err
+	}
+
+	if len(outboxEvents) > 0 {
+		err = tx.Create(&outboxEvents).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit().Error
 }
 
 func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 	dto := DomainToDTO(aggregate)
-
-	tx := postgres.GetTxFromContext(ctx)
-	if tx == nil {
-		tx = r.db
-	}
-	err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(&dto).Error
+	outboxEvents, err := outbox.EncodeDomainEvents(aggregate.GetDomainEvents())
 	if err != nil {
 		return err
 	}
 
-	return r.publishDomainEvents(ctx, aggregate)
+	tx := postgres.GetTxFromContext(ctx)
+	if tx == nil {
+		tx = r.db.Begin()
+		defer tx.Rollback()
+	}
+
+	err = tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(&dto).Error
+	if err != nil {
+		return err
+	}
+
+	if len(outboxEvents) > 0 {
+		err = tx.Create(&outboxEvents).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit().Error
 }
 
 func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error) {
@@ -126,18 +151,4 @@ func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order
 	}
 
 	return aggregates, nil
-}
-
-func (r *Repository) publishDomainEvents(ctx context.Context, aggregate domain.AggregateRoot) error {
-	for _, event := range aggregate.GetDomainEvents() {
-		switch event.(type) {
-		case order.CompletedDomainEvent:
-			err := mediatr.Publish[order.CompletedDomainEvent](ctx, event.(order.CompletedDomainEvent))
-			if err != nil {
-				return err
-			}
-		}
-	}
-	aggregate.ClearDomainEvents()
-	return nil
 }

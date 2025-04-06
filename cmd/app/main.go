@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
 	"net/http"
 	"os"
 
@@ -211,6 +212,11 @@ func mustAutoMigrate(db *gorm.DB) {
 	}
 
 	err = db.AutoMigrate(&courierrepo.CourierDTO{})
+	if err != nil {
+		log.Fatalf("Ошибка миграции: %v", err)
+	}
+
+	err = db.AutoMigrate(&outbox.Message{})
 	if err != nil {
 		log.Fatalf("Ошибка миграции: %v", err)
 	}

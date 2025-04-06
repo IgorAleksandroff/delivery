@@ -161,7 +161,7 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	}
 
 	// Mediatr Subscribes
-	err = mediatr.RegisterNotificationHandlers[order.CompletedDomainEvent](orderDomainEventHandler)
+	err = mediatr.RegisterNotificationHandlers[*order.CompletedDomainEvent](orderDomainEventHandler)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}

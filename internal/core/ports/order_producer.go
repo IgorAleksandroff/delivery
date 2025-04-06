@@ -7,6 +7,6 @@ import (
 )
 
 type OrderProducer interface {
-	Publish(ctx context.Context, domainEvent order.CompletedDomainEvent) error
+	Publish(ctx context.Context, domainEvent *order.CompletedDomainEvent) error
 	Close() error
 }

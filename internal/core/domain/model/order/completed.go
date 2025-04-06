@@ -1,47 +1,52 @@
 package order
 
 import (
+	"reflect"
+
 	"github.com/google/uuid"
+
+	"github.com/IgorAleksandroff/delivery/internal/core/domain"
 )
 
-const CompletedDomainEventName = "order.completed.event"
+var _ domain.Event = &CompletedDomainEvent{}
 
 type CompletedDomainEvent struct {
 	// base
-	id   uuid.UUID
-	name string
+	ID   uuid.UUID
+	Name string
 
 	// payload
-	orderID     uuid.UUID
-	orderStatus string
+	OrderID     uuid.UUID
+	OrderStatus string
 
 	isSet bool
 }
 
-func (e CompletedDomainEvent) ID() uuid.UUID { return e.id }
+func (e CompletedDomainEvent) GetID() uuid.UUID { return e.ID }
 
-func (e CompletedDomainEvent) Name() string {
-	return e.name
+func (e CompletedDomainEvent) GetName() string {
+	return e.Name
 }
 
-func (e CompletedDomainEvent) OrderID() uuid.UUID {
-	return e.orderID
+func (e CompletedDomainEvent) GetOrderID() uuid.UUID {
+	return e.OrderID
 }
 
-func (e CompletedDomainEvent) OrderStatus() string {
-	return e.orderStatus
+func (e CompletedDomainEvent) GetOrderStatus() string {
+	return e.OrderStatus
 }
 
-func NewCompletedDomainEvent(aggregate *Order) CompletedDomainEvent {
-	return CompletedDomainEvent{
-		id:   uuid.New(),
-		name: CompletedDomainEventName,
+func NewCompletedDomainEvent(aggregate *Order) *CompletedDomainEvent {
+	event := CompletedDomainEvent{
+		ID: uuid.New(),
 
-		orderID:     aggregate.ID(),
-		orderStatus: aggregate.Status().String(),
+		OrderID:     aggregate.ID(),
+		OrderStatus: aggregate.Status().String(),
 
 		isSet: true,
 	}
+	event.Name = reflect.TypeOf(event).Name()
+	return &event
 }
 
 func (e CompletedDomainEvent) IsEmpty() bool {

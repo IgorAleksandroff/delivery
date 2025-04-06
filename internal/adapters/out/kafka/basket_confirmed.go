@@ -42,7 +42,7 @@ func NewOrderProducer(brokers []string, topic string) (*OrderProducer, error) {
 	}, nil
 }
 
-func (p *OrderProducer) Publish(_ context.Context, domainEvent order.CompletedDomainEvent) error {
+func (p *OrderProducer) Publish(_ context.Context, domainEvent *order.CompletedDomainEvent) error {
 	integrationEvent, err := p.mapDomainEventToIntegrationEvent(domainEvent)
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func (p *OrderProducer) Publish(_ context.Context, domainEvent order.CompletedDo
 
 	msg := &sarama.ProducerMessage{
 		Topic: p.topic,
-		Key:   sarama.StringEncoder(domainEvent.ID().String()),
+		Key:   sarama.StringEncoder(domainEvent.GetID().String()),
 		Value: sarama.ByteEncoder(bytes),
 	}
 
@@ -65,14 +65,18 @@ func (p *OrderProducer) Close() error {
 	return p.sarama.Close()
 }
 
-func (p *OrderProducer) mapDomainEventToIntegrationEvent(domainEvent order.CompletedDomainEvent) (*orderstatuschangedpb.OrderStatusChangedIntegrationEvent, error) {
-	status, ok := orderstatuschangedpb.OrderStatus_value[domainEvent.OrderStatus()]
+func (p *OrderProducer) mapDomainEventToIntegrationEvent(domainEvent *order.CompletedDomainEvent) (*orderstatuschangedpb.OrderStatusChangedIntegrationEvent, error) {
+	if domainEvent == nil {
+		return nil, errs.NewValueIsInvalidError("CompletedDomainEvent")
+	}
+
+	status, ok := orderstatuschangedpb.OrderStatus_value[domainEvent.GetOrderStatus()]
 	if !ok {
 		return nil, errs.NewValueIsInvalidError("OrderStatus")
 	}
 
 	integrationEvent := orderstatuschangedpb.OrderStatusChangedIntegrationEvent{
-		OrderId:     domainEvent.OrderID().String(),
+		OrderId:     domainEvent.GetOrderID().String(),
 		OrderStatus: orderstatuschangedpb.OrderStatus(status),
 	}
 	return &integrationEvent, nil

@@ -20,7 +20,7 @@ func NewOrderCompleted(orderProducer ports.OrderProducer) (*OrderCompleted, erro
 	return &OrderCompleted{orderProducer: orderProducer}, nil
 }
 
-func (eh *OrderCompleted) Handle(ctx context.Context, domainEvent order.CompletedDomainEvent) error {
+func (eh *OrderCompleted) Handle(ctx context.Context, domainEvent *order.CompletedDomainEvent) error {
 	err := eh.orderProducer.Publish(ctx, domainEvent)
 	if err != nil {
 		return err

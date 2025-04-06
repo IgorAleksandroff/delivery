@@ -5,6 +5,6 @@ import (
 )
 
 type Event interface {
-	ID() uuid.UUID
-	Name() string
+	GetID() uuid.UUID
+	GetName() string
 }
