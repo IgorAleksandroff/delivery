@@ -49,7 +49,7 @@ func NewAssignOrdersCommandHandler(
 		orderDispatcher:   orderDispatcher}, nil
 }
 
-func (ch *AssignOrdersCommandHandler) Handle(ctx context.Context, command AssignOrdersCommand) error {
+func (ch *AssignOrdersCommandHandler) Handle(ctx context.Context, command AssignOrdersCommand) (err error) {
 	if command.isEmpty() {
 		return errs.NewValueIsRequiredError("add address command")
 	}
@@ -80,9 +80,11 @@ func (ch *AssignOrdersCommandHandler) Handle(ctx context.Context, command Assign
 	// Сохранили
 	ctx = ch.unitOfWork.Begin(ctx)
 	defer func() {
-		err := ch.unitOfWork.Rollback(ctx)
 		if err != nil {
-			log.Println("AssignOrdersCommandHandler Rollback error:", err)
+			errRollback := ch.unitOfWork.Rollback(ctx)
+			if errRollback != nil {
+				log.Println("AssignOrdersCommandHandler Rollback error:", errRollback)
+			}
 		}
 	}()
 

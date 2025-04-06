@@ -52,6 +52,6 @@ type GetNotCompletedOrdersResponse struct {
 }
 
 type OrderResponse struct {
-	ID       uuid.UUID
-	Location LocationResponse
+	ID       uuid.UUID        `gorm:"type:uuid;primaryKey"`
+	Location LocationResponse `gorm:"embedded;embeddedPrefix:location_"`
 }

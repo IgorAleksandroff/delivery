@@ -37,7 +37,7 @@ func NewMoveCouriersCommandHandler(
 		courierRepository: courierRepository}, nil
 }
 
-func (ch *MoveCouriersCommandHandler) Handle(ctx context.Context, command MoveCouriersCommand) error {
+func (ch *MoveCouriersCommandHandler) Handle(ctx context.Context, command MoveCouriersCommand) (err error) {
 	if command.isEmpty() {
 		return errs.NewValueIsRequiredError("add address command")
 	}
@@ -54,9 +54,13 @@ func (ch *MoveCouriersCommandHandler) Handle(ctx context.Context, command MoveCo
 	// Изменили и сохранили
 	ctx = ch.unitOfWork.Begin(ctx)
 	defer func() {
-		err := ch.unitOfWork.Rollback(ctx)
 		if err != nil {
-			log.Println("MoveCouriersCommandHandler Rollback error:", err)
+			errRollback := ch.unitOfWork.Rollback(ctx)
+			if errRollback != nil {
+				if err != nil {
+					log.Println("MoveCouriersCommandHandler Rollback error:", err)
+				}
+			}
 		}
 	}()
 
