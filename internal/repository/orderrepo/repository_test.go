@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/testutil"
 )
 
@@ -51,7 +51,7 @@ func Test_OrderRepositoryShouldCanAddOrder(t *testing.T) {
 
 	location, err := kernel.MaxLocation()
 	require.NoError(t, err)
-	orderAggregate, err := order.NewOrder(uuid.New(), location)
+	orderAggregate, err := orders.NewOrder(uuid.New(), location)
 	err = orderRepository.Add(ctx, orderAggregate)
 	require.NoError(t, err)
 

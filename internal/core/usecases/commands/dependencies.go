@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/courier"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/google/uuid"
 )
 
@@ -20,9 +20,9 @@ type CourierRepository interface {
 }
 
 type OrderRepository interface {
-	Add(ctx context.Context, aggregate *order.Order) error
-	Update(ctx context.Context, aggregate *order.Order) error
-	Get(ctx context.Context, ID uuid.UUID) (*order.Order, error)
-	GetFirstInCreatedStatus(ctx context.Context) (*order.Order, error)
-	GetAllInAssignedStatus(ctx context.Context) ([]*order.Order, error)
+	Add(ctx context.Context, aggregate *orders.Order) error
+	Update(ctx context.Context, aggregate *orders.Order) error
+	Get(ctx context.Context, ID uuid.UUID) (*orders.Order, error)
+	GetFirstInCreatedStatus(ctx context.Context) (*orders.Order, error)
+	GetAllInAssignedStatus(ctx context.Context) ([]*orders.Order, error)
 }

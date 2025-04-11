@@ -9,7 +9,7 @@ import (
 
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/courier"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
@@ -77,7 +77,7 @@ func TestAssignOrdersCommandHandler_Handle(t *testing.T) {
 			}(),
 			setupStubs: func() (*stubUnitOfWork, *stubOrderRepository, *stubCourierRepository) {
 				return &stubUnitOfWork{},
-					&stubOrderRepository{order: &order.Order{}},
+					&stubOrderRepository{order: &orders.Order{}},
 					&stubCourierRepository{couriers: []*courier.Courier{}}
 			},
 			expectedError: NotAvailableCouriers,
@@ -95,7 +95,7 @@ func TestAssignOrdersCommandHandler_Handle(t *testing.T) {
 			}(),
 			setupStubs: func() (*stubUnitOfWork, *stubOrderRepository, *stubCourierRepository) {
 				return &stubUnitOfWork{},
-					&stubOrderRepository{order: &order.Order{}},
+					&stubOrderRepository{order: &orders.Order{}},
 					&stubCourierRepository{getAllError: errors.New("database error")}
 			},
 			expectedError: errors.New("database error"),
@@ -112,7 +112,7 @@ func TestAssignOrdersCommandHandler_Handle(t *testing.T) {
 				return cmd
 			}(),
 			setupStubs: func() (*stubUnitOfWork, *stubOrderRepository, *stubCourierRepository) {
-				testOrder := order.MustNewOrder(uuid.New(), kernel.CreateRandomLocation())
+				testOrder := orders.MustNewOrder(uuid.New(), kernel.CreateRandomLocation())
 				testCourier := courier.MustNewCourier("courier-1", "transport", 1, kernel.CreateRandomLocation())
 				return &stubUnitOfWork{},
 					&stubOrderRepository{
@@ -135,7 +135,7 @@ func TestAssignOrdersCommandHandler_Handle(t *testing.T) {
 				return cmd
 			}(),
 			setupStubs: func() (*stubUnitOfWork, *stubOrderRepository, *stubCourierRepository) {
-				testOrder := order.MustNewOrder(uuid.New(), kernel.CreateRandomLocation())
+				testOrder := orders.MustNewOrder(uuid.New(), kernel.CreateRandomLocation())
 				testCourier := courier.MustNewCourier("courier-1", "transport", 1, kernel.CreateRandomLocation())
 				return &stubUnitOfWork{},
 					&stubOrderRepository{order: testOrder},
@@ -158,7 +158,7 @@ func TestAssignOrdersCommandHandler_Handle(t *testing.T) {
 				return cmd
 			}(),
 			setupStubs: func() (*stubUnitOfWork, *stubOrderRepository, *stubCourierRepository) {
-				testOrder := order.MustNewOrder(uuid.New(), kernel.CreateRandomLocation())
+				testOrder := orders.MustNewOrder(uuid.New(), kernel.CreateRandomLocation())
 				testCourier := courier.MustNewCourier("courier-1", "transport", 1, kernel.CreateRandomLocation())
 				return &stubUnitOfWork{commitError: errors.New("commit error")},
 					&stubOrderRepository{order: testOrder},
@@ -178,7 +178,7 @@ func TestAssignOrdersCommandHandler_Handle(t *testing.T) {
 				return cmd
 			}(),
 			setupStubs: func() (*stubUnitOfWork, *stubOrderRepository, *stubCourierRepository) {
-				testOrder := order.MustNewOrder(uuid.New(), kernel.CreateRandomLocation())
+				testOrder := orders.MustNewOrder(uuid.New(), kernel.CreateRandomLocation())
 				testCourier := courier.MustNewCourier("courier-1", "transport", 1, kernel.CreateRandomLocation())
 				return &stubUnitOfWork{},
 					&stubOrderRepository{order: testOrder},
@@ -254,29 +254,29 @@ func (s *stubUnitOfWork) Rollback(ctx context.Context) error {
 }
 
 type stubOrderRepository struct {
-	order         *order.Order
+	order         *orders.Order
 	getFirstError error
 	updateCalled  bool
 	updateError   error
 }
 
-func (s *stubOrderRepository) Add(ctx context.Context, aggregate *order.Order) error {
+func (s *stubOrderRepository) Add(ctx context.Context, aggregate *orders.Order) error {
 	return nil
 }
 
-func (s *stubOrderRepository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error) {
+func (s *stubOrderRepository) Get(ctx context.Context, ID uuid.UUID) (*orders.Order, error) {
 	return s.order, nil
 }
 
-func (s *stubOrderRepository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order, error) {
-	return []*order.Order{s.order}, nil
+func (s *stubOrderRepository) GetAllInAssignedStatus(ctx context.Context) ([]*orders.Order, error) {
+	return []*orders.Order{s.order}, nil
 }
 
-func (s *stubOrderRepository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order, error) {
+func (s *stubOrderRepository) GetFirstInCreatedStatus(ctx context.Context) (*orders.Order, error) {
 	return s.order, s.getFirstError
 }
 
-func (s *stubOrderRepository) Update(ctx context.Context, order *order.Order) error {
+func (s *stubOrderRepository) Update(ctx context.Context, order *orders.Order) error {
 	s.updateCalled = true
 	return s.updateError
 }

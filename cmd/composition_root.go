@@ -4,7 +4,7 @@ import (
 	"github.com/IgorAleksandroff/delivery/internal/api/kafka"
 	"github.com/IgorAleksandroff/delivery/internal/clients/geo"
 	kafkaout "github.com/IgorAleksandroff/delivery/internal/clients/kafka"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/core/eventhandlers"
 	"github.com/IgorAleksandroff/delivery/internal/core/usecases/commands"
@@ -84,7 +84,7 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
-	err = eventRegistry.RegisterDomainEvent(reflect.TypeOf(order.CompletedDomainEvent{}))
+	err = eventRegistry.RegisterDomainEvent(reflect.TypeOf(orders.CompletedDomainEvent{}))
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
@@ -182,7 +182,7 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	}
 
 	// Mediatr Subscribes
-	err = mediatr.RegisterNotificationHandlers[*order.CompletedDomainEvent](orderDomainEventHandler)
+	err = mediatr.RegisterNotificationHandlers[*orders.CompletedDomainEvent](orderDomainEventHandler)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
