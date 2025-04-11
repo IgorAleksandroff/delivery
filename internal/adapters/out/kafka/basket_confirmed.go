@@ -7,7 +7,7 @@ import (
 
 	"github.com/IBM/sarama"
 
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	"github.com/IgorAleksandroff/delivery/pkg/clients/queues/queues/orderstatuschangedpb"
 )
@@ -42,7 +42,7 @@ func NewOrderProducer(brokers []string, topic string) (*OrderProducer, error) {
 	}, nil
 }
 
-func (p *OrderProducer) Publish(_ context.Context, domainEvent *order.CompletedDomainEvent) error {
+func (p *OrderProducer) Publish(_ context.Context, domainEvent *orders.CompletedDomainEvent) error {
 	integrationEvent, err := p.mapDomainEventToIntegrationEvent(domainEvent)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (p *OrderProducer) Close() error {
 	return p.sarama.Close()
 }
 
-func (p *OrderProducer) mapDomainEventToIntegrationEvent(domainEvent *order.CompletedDomainEvent) (*orderstatuschangedpb.OrderStatusChangedIntegrationEvent, error) {
+func (p *OrderProducer) mapDomainEventToIntegrationEvent(domainEvent *orders.CompletedDomainEvent) (*orderstatuschangedpb.OrderStatusChangedIntegrationEvent, error) {
 	if domainEvent == nil {
 		return nil, errs.NewValueIsInvalidError("CompletedDomainEvent")
 	}

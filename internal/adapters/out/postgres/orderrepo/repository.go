@@ -10,7 +10,7 @@ import (
 
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
@@ -31,7 +31,7 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 	}, nil
 }
 
-func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
+func (r *Repository) Add(ctx context.Context, aggregate *orders.Order) error {
 	dto := DomainToDTO(aggregate)
 	outboxEvents, err := outbox.EncodeDomainEvents(aggregate.GetDomainEvents())
 	if err != nil {
@@ -64,7 +64,7 @@ func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
 	return nil
 }
 
-func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
+func (r *Repository) Update(ctx context.Context, aggregate *orders.Order) error {
 	dto := DomainToDTO(aggregate)
 	outboxEvents, err := outbox.EncodeDomainEvents(aggregate.GetDomainEvents())
 	if err != nil {
@@ -97,7 +97,7 @@ func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
 	return nil
 }
 
-func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error) {
+func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*orders.Order, error) {
 	dto := OrderDTO{}
 
 	tx := postgres.GetTxFromContext(ctx)
@@ -115,7 +115,7 @@ func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error
 	return aggregate, nil
 }
 
-func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order, error) {
+func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*orders.Order, error) {
 	dto := OrderDTO{}
 
 	tx := postgres.GetTxFromContext(ctx)
@@ -124,7 +124,7 @@ func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order,
 	}
 	result := tx.
 		Preload(clause.Associations).
-		Where("status = ?", order.StatusCreated).
+		Where("status = ?", orders.StatusCreated).
 		First(&dto)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -137,7 +137,7 @@ func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order,
 	return aggregate, nil
 }
 
-func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order, error) {
+func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*orders.Order, error) {
 	var dtos []OrderDTO
 
 	tx := postgres.GetTxFromContext(ctx)
@@ -146,7 +146,7 @@ func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order
 	}
 	result := tx.
 		Preload(clause.Associations).
-		Where("status = ?", order.StatusAssigned).
+		Where("status = ?", orders.StatusAssigned).
 		Find(&dtos)
 	if result.Error != nil {
 		return nil, result.Error
@@ -155,7 +155,7 @@ func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order
 		return nil, errs.NewObjectNotFoundError("Assigned orders", nil)
 	}
 
-	aggregates := make([]*order.Order, len(dtos))
+	aggregates := make([]*orders.Order, len(dtos))
 	for i, dto := range dtos {
 		aggregates[i] = DtoToDomain(dto)
 	}

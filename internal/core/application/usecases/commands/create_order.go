@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
@@ -51,7 +51,7 @@ func (ch *CreateOrderCommandHandler) Handle(ctx context.Context, command CreateO
 	}
 
 	// Изменили
-	orderAggregate, err = order.NewOrder(command.orderID, location)
+	orderAggregate, err = orders.NewOrder(command.orderID, location)
 	if err != nil {
 		return err
 	}

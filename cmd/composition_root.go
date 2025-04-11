@@ -19,7 +19,7 @@ import (
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres/orderrepo"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/commands"
 	"github.com/IgorAleksandroff/delivery/internal/core/application/usecases/queries"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/services"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/uow"
@@ -87,7 +87,7 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
-	err = eventRegistry.RegisterDomainEvent(reflect.TypeOf(order.CompletedDomainEvent{}))
+	err = eventRegistry.RegisterDomainEvent(reflect.TypeOf(orders.CompletedDomainEvent{}))
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}
@@ -185,7 +185,7 @@ func NewCompositionRoot(gormDb *gorm.DB, cfg Config) CompositionRoot {
 	}
 
 	// Mediatr Subscribes
-	err = mediatr.RegisterNotificationHandlers[*order.CompletedDomainEvent](orderDomainEventHandler)
+	err = mediatr.RegisterNotificationHandlers[*orders.CompletedDomainEvent](orderDomainEventHandler)
 	if err != nil {
 		log.Fatalf("run application error: %s", err)
 	}

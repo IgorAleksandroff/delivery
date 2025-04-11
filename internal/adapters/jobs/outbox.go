@@ -3,7 +3,7 @@ package jobs
 import (
 	"context"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 	"github.com/labstack/gommon/log"
 	"github.com/mehdihadeli/go-mediatr"
@@ -52,8 +52,8 @@ func (j *OutboxJob) Run() {
 		// Go не поддерживает вызов generic-функций с параметрами T во время выполнения
 		// Поэтому делаем Switch
 		switch domainEvent.(type) {
-		case *order.CompletedDomainEvent:
-			err := mediatr.Publish[*order.CompletedDomainEvent](ctx, domainEvent.(*order.CompletedDomainEvent))
+		case *orders.CompletedDomainEvent:
+			err := mediatr.Publish[*orders.CompletedDomainEvent](ctx, domainEvent.(*orders.CompletedDomainEvent))
 			if err != nil {
 				log.Error(err)
 				continue

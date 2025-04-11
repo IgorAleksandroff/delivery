@@ -9,7 +9,7 @@ import (
 
 	model "github.com/IgorAleksandroff/delivery/internal/core/domain/model/courier"
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
@@ -36,7 +36,7 @@ func TestDispatch_EmptyCouriers(t *testing.T) {
 	dispatcher := NewOrderDispatcher()
 	orderLocation := kernel.MustNewLocation(5, 5)
 	orderID := uuid.New()
-	order := order.MustNewOrder(orderID, orderLocation)
+	order := orders.MustNewOrder(orderID, orderLocation)
 	var emptyCouriers []*model.Courier
 
 	// Act
@@ -59,7 +59,7 @@ func TestDispatch_SuccessWithSingleCourier(t *testing.T) {
 
 	// Create order and courier
 	orderID := uuid.New()
-	order := order.MustNewOrder(orderID, orderLocation)
+	order := orders.MustNewOrder(orderID, orderLocation)
 	courier := model.MustNewCourier("courier1", "bike", 3, courierLocation)
 
 	couriers := []*model.Courier{courier}
@@ -83,7 +83,7 @@ func TestDispatch_SuccessSelectsBestCourier(t *testing.T) {
 
 	// Create order
 	orderID := uuid.New()
-	order := order.MustNewOrder(orderID, orderLocation)
+	order := orders.MustNewOrder(orderID, orderLocation)
 
 	// Create couriers at different distances
 	courier1Location := kernel.MustNewLocation(10, 10)
@@ -120,7 +120,7 @@ func TestDispatch_SuccessWithEqualDistances(t *testing.T) {
 
 	// Create order and couriers
 	orderID := uuid.New()
-	order := order.MustNewOrder(orderID, orderLocation)
+	order := orders.MustNewOrder(orderID, orderLocation)
 	courier1 := model.MustNewCourier("courier1", "bike", 3, courier1Location)
 	courier2 := model.MustNewCourier("courier2", "bike", 3, courier2Location)
 
@@ -148,7 +148,7 @@ func TestDispatch_CourierWithFasterTransport(t *testing.T) {
 
 	// Create order and couriers
 	orderID := uuid.New()
-	order := order.MustNewOrder(orderID, orderLocation)
+	order := orders.MustNewOrder(orderID, orderLocation)
 	courier1 := model.MustNewCourier("courier1", "bike", 1, courier1Location) // Slower
 	courier2 := model.MustNewCourier("courier2", "car", 3, courier2Location)  // Faster
 
@@ -177,7 +177,7 @@ func TestDispatch_IndexBoundsInLoop(t *testing.T) {
 
 	// Create order
 	orderID := uuid.New()
-	order := order.MustNewOrder(orderID, orderLocation)
+	order := orders.MustNewOrder(orderID, orderLocation)
 
 	// Create 5 couriers to ensure loop bounds are handled correctly
 	var couriers []*model.Courier

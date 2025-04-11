@@ -3,7 +3,7 @@ package eventhandlers
 import (
 	"context"
 
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
@@ -20,7 +20,7 @@ func NewOrderCompleted(orderProducer ports.OrderProducer) (*OrderCompleted, erro
 	return &OrderCompleted{orderProducer: orderProducer}, nil
 }
 
-func (eh *OrderCompleted) Handle(ctx context.Context, domainEvent *order.CompletedDomainEvent) error {
+func (eh *OrderCompleted) Handle(ctx context.Context, domainEvent *orders.CompletedDomainEvent) error {
 	err := eh.orderProducer.Publish(ctx, domainEvent)
 	if err != nil {
 		return err
