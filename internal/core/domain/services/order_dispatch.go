@@ -2,7 +2,7 @@ package services
 
 import (
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/courier"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
@@ -12,7 +12,7 @@ func NewOrderDispatcher() *Dispatcher {
 	return &Dispatcher{}
 }
 
-func (p *Dispatcher) Dispatch(order *order.Order, couriers []*courier.Courier) (*courier.Courier, error) {
+func (p *Dispatcher) Dispatch(order *orders.Order, couriers []*courier.Courier) (*courier.Courier, error) {
 	if order == nil {
 		return nil, errs.NewValueIsRequiredError("order")
 	}

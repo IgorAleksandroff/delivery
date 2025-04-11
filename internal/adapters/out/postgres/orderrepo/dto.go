@@ -4,14 +4,14 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/kernel"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 )
 
 type OrderDTO struct {
-	ID        uuid.UUID    `gorm:"type:uuid;primaryKey"`
-	CourierID *uuid.UUID   `gorm:"type:uuid;index"`
-	Location  LocationDTO  `gorm:"embedded;embeddedPrefix:location_"`
-	Status    order.Status `gorm:"type:varchar(20)"`
+	ID        uuid.UUID     `gorm:"type:uuid;primaryKey"`
+	CourierID *uuid.UUID    `gorm:"type:uuid;index"`
+	Location  LocationDTO   `gorm:"embedded;embeddedPrefix:location_"`
+	Status    orders.Status `gorm:"type:varchar(20)"`
 }
 
 type LocationDTO struct {
@@ -23,7 +23,7 @@ func (OrderDTO) TableName() string {
 	return "orders"
 }
 
-func DomainToDTO(aggregate *order.Order) OrderDTO {
+func DomainToDTO(aggregate *orders.Order) OrderDTO {
 	var orderDTO OrderDTO
 	orderDTO.ID = aggregate.ID()
 	orderDTO.CourierID = aggregate.AssignedCourier()
@@ -35,9 +35,9 @@ func DomainToDTO(aggregate *order.Order) OrderDTO {
 	return orderDTO
 }
 
-func DtoToDomain(dto OrderDTO) *order.Order {
-	var aggregate *order.Order
+func DtoToDomain(dto OrderDTO) *orders.Order {
+	var aggregate *orders.Order
 	location, _ := kernel.NewLocation(dto.Location.X, dto.Location.Y)
-	aggregate = order.RestoreOrder(dto.ID, dto.CourierID, location, dto.Status)
+	aggregate = orders.RestoreOrder(dto.ID, dto.CourierID, location, dto.Status)
 	return aggregate
 }

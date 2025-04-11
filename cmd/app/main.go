@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
 	"net/http"
 	"os"
 
@@ -67,6 +68,10 @@ func startCron(compositionRoot cmd.CompositionRoot) {
 		log.Fatalf("ошибка при добавлении задачи: %v", err)
 	}
 	_, err = c.AddFunc("@every 2s", compositionRoot.Jobs.MoveCouriersJob.Run)
+	if err != nil {
+		log.Fatalf("ошибка при добавлении задачи: %v", err)
+	}
+	_, err = c.AddFunc("@every 10s", compositionRoot.Jobs.OutboxJob.Run)
 	if err != nil {
 		log.Fatalf("ошибка при добавлении задачи: %v", err)
 	}
@@ -211,6 +216,11 @@ func mustAutoMigrate(db *gorm.DB) {
 	}
 
 	err = db.AutoMigrate(&courierrepo.CourierDTO{})
+	if err != nil {
+		log.Fatalf("Ошибка миграции: %v", err)
+	}
+
+	err = db.AutoMigrate(&outbox.Message{})
 	if err != nil {
 		log.Fatalf("Ошибка миграции: %v", err)
 	}

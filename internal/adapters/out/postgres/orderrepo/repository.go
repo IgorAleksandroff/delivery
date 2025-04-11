@@ -5,13 +5,12 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/mehdihadeli/go-mediatr"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/IgorAleksandroff/delivery/internal/adapters/out/outbox"
 	"github.com/IgorAleksandroff/delivery/internal/adapters/out/postgres"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain"
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/core/ports"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
@@ -32,37 +31,73 @@ func NewRepository(db *gorm.DB) (*Repository, error) {
 	}, nil
 }
 
-func (r *Repository) Add(ctx context.Context, aggregate *order.Order) error {
+func (r *Repository) Add(ctx context.Context, aggregate *orders.Order) error {
 	dto := DomainToDTO(aggregate)
-
-	tx := postgres.GetTxFromContext(ctx)
-	if tx == nil {
-		tx = r.db
-	}
-	err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Create(&dto).Error
+	outboxEvents, err := outbox.EncodeDomainEvents(aggregate.GetDomainEvents())
 	if err != nil {
 		return err
 	}
 
-	return r.publishDomainEvents(ctx, aggregate)
-}
-
-func (r *Repository) Update(ctx context.Context, aggregate *order.Order) error {
-	dto := DomainToDTO(aggregate)
-
 	tx := postgres.GetTxFromContext(ctx)
-	if tx == nil {
-		tx = r.db
+	isTransaction := tx == nil
+	if isTransaction {
+		tx = r.db.Begin()
+		defer tx.Rollback()
 	}
-	err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(&dto).Error
+
+	err = tx.Session(&gorm.Session{FullSaveAssociations: true}).Create(&dto).Error
 	if err != nil {
 		return err
 	}
 
-	return r.publishDomainEvents(ctx, aggregate)
+	if len(outboxEvents) > 0 {
+		err = tx.Create(&outboxEvents).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	if isTransaction {
+		return tx.Commit().Error
+	}
+
+	return nil
 }
 
-func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error) {
+func (r *Repository) Update(ctx context.Context, aggregate *orders.Order) error {
+	dto := DomainToDTO(aggregate)
+	outboxEvents, err := outbox.EncodeDomainEvents(aggregate.GetDomainEvents())
+	if err != nil {
+		return err
+	}
+
+	tx := postgres.GetTxFromContext(ctx)
+	isTransaction := tx == nil
+	if isTransaction {
+		tx = r.db.Begin()
+		defer tx.Rollback()
+	}
+
+	err = tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(&dto).Error
+	if err != nil {
+		return err
+	}
+
+	if len(outboxEvents) > 0 {
+		err = tx.Create(&outboxEvents).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	if isTransaction {
+		return tx.Commit().Error
+	}
+
+	return nil
+}
+
+func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*orders.Order, error) {
 	dto := OrderDTO{}
 
 	tx := postgres.GetTxFromContext(ctx)
@@ -80,7 +115,7 @@ func (r *Repository) Get(ctx context.Context, ID uuid.UUID) (*order.Order, error
 	return aggregate, nil
 }
 
-func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order, error) {
+func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*orders.Order, error) {
 	dto := OrderDTO{}
 
 	tx := postgres.GetTxFromContext(ctx)
@@ -89,7 +124,7 @@ func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order,
 	}
 	result := tx.
 		Preload(clause.Associations).
-		Where("status = ?", order.StatusCreated).
+		Where("status = ?", orders.StatusCreated).
 		First(&dto)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -102,7 +137,7 @@ func (r *Repository) GetFirstInCreatedStatus(ctx context.Context) (*order.Order,
 	return aggregate, nil
 }
 
-func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order, error) {
+func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*orders.Order, error) {
 	var dtos []OrderDTO
 
 	tx := postgres.GetTxFromContext(ctx)
@@ -111,7 +146,7 @@ func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order
 	}
 	result := tx.
 		Preload(clause.Associations).
-		Where("status = ?", order.StatusAssigned).
+		Where("status = ?", orders.StatusAssigned).
 		Find(&dtos)
 	if result.Error != nil {
 		return nil, result.Error
@@ -120,24 +155,10 @@ func (r *Repository) GetAllInAssignedStatus(ctx context.Context) ([]*order.Order
 		return nil, errs.NewObjectNotFoundError("Assigned orders", nil)
 	}
 
-	aggregates := make([]*order.Order, len(dtos))
+	aggregates := make([]*orders.Order, len(dtos))
 	for i, dto := range dtos {
 		aggregates[i] = DtoToDomain(dto)
 	}
 
 	return aggregates, nil
-}
-
-func (r *Repository) publishDomainEvents(ctx context.Context, aggregate domain.AggregateRoot) error {
-	for _, event := range aggregate.GetDomainEvents() {
-		switch event.(type) {
-		case order.CompletedDomainEvent:
-			err := mediatr.Publish[order.CompletedDomainEvent](ctx, event.(order.CompletedDomainEvent))
-			if err != nil {
-				return err
-			}
-		}
-	}
-	aggregate.ClearDomainEvents()
-	return nil
 }

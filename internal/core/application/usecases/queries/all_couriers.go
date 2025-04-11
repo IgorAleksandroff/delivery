@@ -50,9 +50,9 @@ type GetAllCouriersResponse struct {
 }
 
 type CourierResponse struct {
-	ID       uuid.UUID
+	ID       uuid.UUID `gorm:"type:uuid;primaryKey"`
 	Name     string
-	Location LocationResponse
+	Location LocationResponse `gorm:"embedded;embeddedPrefix:location_"`
 }
 
 type LocationResponse struct {

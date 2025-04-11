@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/order"
+	"github.com/IgorAleksandroff/delivery/internal/core/domain/model/orders"
 	"github.com/IgorAleksandroff/delivery/internal/pkg/errs"
 )
 
@@ -27,7 +27,7 @@ func (q *GetNotCompletedOrdersQueryHandler) Handle(query GetNotCompletedOrdersQu
 
 	var orders []OrderResponse
 	result := q.db.Raw("SELECT id, courier_id, location_x, location_y, status FROM public.orders where status!=?",
-		order.StatusCompleted).Scan(&orders)
+		orders.StatusCompleted).Scan(&orders)
 
 	if result.Error != nil {
 		return GetNotCompletedOrdersResponse{}, result.Error
@@ -52,6 +52,6 @@ type GetNotCompletedOrdersResponse struct {
 }
 
 type OrderResponse struct {
-	ID       uuid.UUID
-	Location LocationResponse
+	ID       uuid.UUID        `gorm:"type:uuid;primaryKey"`
+	Location LocationResponse `gorm:"embedded;embeddedPrefix:location_"`
 }

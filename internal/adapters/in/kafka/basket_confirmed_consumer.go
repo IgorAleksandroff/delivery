@@ -64,17 +64,21 @@ func (c *BasketConfirmedConsumer) Consume() error {
 	}
 
 	for {
-		c.consume()
+		err = c.consume()
+		if err != nil {
+			return err
+		}
 	}
 }
 
-func (c *BasketConfirmedConsumer) consume() {
+func (c *BasketConfirmedConsumer) consume() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	msg, err := c.consumer.ReadMessage(-1)
 	if err != nil {
 		fmt.Printf("Consumer error: %v (%v)\n", err, msg)
+		return err
 	}
 
 	// Обрабатываем сообщение
@@ -83,6 +87,7 @@ func (c *BasketConfirmedConsumer) consume() {
 	err = json.Unmarshal(msg.Value, &event)
 	if err != nil {
 		log.Printf("Failed to unmarshal message: %v", err)
+		return err
 	}
 
 	// Отправляем команду
@@ -90,6 +95,7 @@ func (c *BasketConfirmedConsumer) consume() {
 		createOrderID(event.BasketId), event.GetAddress().GetStreet())
 	if err != nil {
 		log.Printf("Failed to create changeStocks command: %v", err)
+		return err
 	}
 	err = c.createOrderCommandHandler.Handle(ctx, createOrderCommand)
 	if err != nil {
@@ -101,6 +107,8 @@ func (c *BasketConfirmedConsumer) consume() {
 	if err != nil {
 		log.Printf("Commit failed: %v", err)
 	}
+
+	return nil
 }
 
 func createOrderID(basketID string) uuid.UUID {
